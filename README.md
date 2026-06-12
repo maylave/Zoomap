@@ -15,16 +15,16 @@
 ## 🛠 Технологический стек
 
 ### Frontend
-*   **Framework**: [Vue 3](https://vuejs.org/) (Composition API)
+*   **Framework**: [Vue 3](https://vuejs.org/)
 *   **Language**: [TypeScript](https://www.typescriptlang.org/)
-*   **Styling**: [Tailwind CSS v4](https://tailwindcss.com/) (использование нового движка Oxide)
+*   **Styling**: [Tailwind CSS v4](https://tailwindcss.com/)
 *   **Build Tool**: Vite
-*   **State Management**: Pinia (рекомендуется) или Vue Reactivity API
+*   **State Management**: Pinia 
 
 ### Backend
 *   **Runtime**: [Node.js](https://nodejs.org/)
-*   **Framework**: Express / Fastify (или NestJS, в зависимости от твоей реализации)
-*   **Database**: MongoDB / PostgreSQL (укажи свою БД здесь)
+*   **Framework**: Express
+*   **Database**: MongoDB / PostgreSQL
 
 ## 📂 Структура проекта
 
