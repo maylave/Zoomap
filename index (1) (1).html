@@ -1,0 +1,1208 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ZooVerse — Живой мир рядом</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    /* ── RESET & VARS ── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --forest:   #1a2e1a;
+      --moss:     #2d4a2d;
+      --sage:     #5c7a3e;
+      --lime:     #a8c96b;
+      --cream:    #f5f0e8;
+      --sand:     #e8d9b5;
+      --terracota:#c4602a;
+      --amber:    #e8933a;
+      --white:    #fdfaf5;
+      --text:     #1a1a18;
+      --muted:    #6b6b5a;
+      --radius:   16px;
+      --transition: .45s cubic-bezier(.25,.8,.25,1);
+    }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--white);
+      color: var(--text);
+      overflow-x: hidden;
+    }
+
+    /* ── CURSOR ── */
+    .cursor {
+      width: 12px; height: 12px;
+      background: var(--lime);
+      border-radius: 50%;
+      position: fixed; top: 0; left: 0;
+      pointer-events: none; z-index: 9999;
+      transform: translate(-50%,-50%);
+      transition: transform .15s ease, width .3s, height .3s, background .3s;
+      mix-blend-mode: multiply;
+    }
+    .cursor-ring {
+      width: 36px; height: 36px;
+      border: 1.5px solid var(--sage);
+      border-radius: 50%;
+      position: fixed; top: 0; left: 0;
+      pointer-events: none; z-index: 9998;
+      transform: translate(-50%,-50%);
+      transition: transform .35s ease;
+      mix-blend-mode: multiply;
+    }
+
+    /* ── NAV ── */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 20px 60px;
+      transition: background var(--transition), backdrop-filter var(--transition);
+    }
+    nav.scrolled {
+      background: rgba(245,240,232,.88);
+      backdrop-filter: blur(18px);
+      border-bottom: 1px solid rgba(92,122,62,.15);
+    }
+    .nav-logo {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.7rem; font-weight: 900;
+      color: var(--forest);
+      letter-spacing: -.5px;
+      text-decoration: none;
+    }
+    .nav-logo span { color: var(--sage); }
+    .nav-links { display: flex; gap: 36px; list-style: none; }
+    .nav-links a {
+      text-decoration: none;
+      font-size: .9rem; font-weight: 500;
+      color: var(--forest);
+      opacity: .7;
+      transition: opacity .3s;
+      letter-spacing: .02em;
+    }
+    .nav-links a:hover { opacity: 1; }
+    .nav-cta {
+      background: var(--forest);
+      color: var(--cream) !important;
+      opacity: 1 !important;
+      padding: 10px 22px;
+      border-radius: 50px;
+      font-weight: 500 !important;
+      transition: background var(--transition) !important;
+    }
+    .nav-cta:hover { background: var(--sage) !important; }
+
+    /* ── HERO ── */
+    #hero {
+      min-height: 100vh;
+      background: var(--forest);
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      align-items: center;
+      position: relative;
+      overflow: hidden;
+      padding: 120px 60px 60px;
+    }
+    .hero-bg-pattern {
+      position: absolute; inset: 0;
+      background-image:
+        radial-gradient(ellipse 600px 500px at 80% 50%, rgba(168,201,107,.12) 0%, transparent 70%),
+        radial-gradient(ellipse 300px 300px at 20% 80%, rgba(196,96,42,.08) 0%, transparent 60%);
+    }
+    .hero-content { position: relative; z-index: 2; }
+    .hero-tag {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: rgba(168,201,107,.15);
+      border: 1px solid rgba(168,201,107,.3);
+      border-radius: 50px;
+      padding: 6px 16px;
+      font-size: .78rem; font-weight: 500;
+      color: var(--lime);
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      margin-bottom: 28px;
+      opacity: 0;
+      animation: fadeUp .8s .2s forwards;
+    }
+    .hero-tag::before {
+      content: '';
+      width: 6px; height: 6px;
+      background: var(--lime);
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%,100% { opacity: 1; transform: scale(1); }
+      50% { opacity: .4; transform: scale(.6); }
+    }
+    .hero-title {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(3rem, 5.5vw, 5.5rem);
+      font-weight: 900;
+      line-height: 1.05;
+      color: var(--cream);
+      margin-bottom: 28px;
+      opacity: 0;
+      animation: fadeUp .9s .4s forwards;
+    }
+    .hero-title em {
+      font-style: italic;
+      color: var(--lime);
+    }
+    .hero-desc {
+      font-size: 1.05rem; font-weight: 300;
+      color: rgba(245,240,232,.65);
+      max-width: 440px;
+      line-height: 1.75;
+      margin-bottom: 44px;
+      opacity: 0;
+      animation: fadeUp .9s .6s forwards;
+    }
+    .hero-actions {
+      display: flex; gap: 16px; align-items: center;
+      opacity: 0;
+      animation: fadeUp .9s .8s forwards;
+    }
+    .btn-primary {
+      display: inline-flex; align-items: center; gap: 10px;
+      background: var(--lime);
+      color: var(--forest);
+      text-decoration: none;
+      padding: 16px 32px;
+      border-radius: 50px;
+      font-weight: 500; font-size: .95rem;
+      transition: transform .3s, box-shadow .3s;
+      border: none; cursor: pointer;
+    }
+    .btn-primary:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 16px 40px rgba(168,201,107,.35);
+    }
+    .btn-ghost {
+      display: inline-flex; align-items: center; gap: 8px;
+      color: rgba(245,240,232,.7);
+      text-decoration: none;
+      font-size: .9rem; font-weight: 400;
+      transition: color .3s;
+      background: none; border: none; cursor: pointer;
+    }
+    .btn-ghost:hover { color: var(--cream); }
+    .btn-ghost .play-icon {
+      width: 40px; height: 40px;
+      border: 1px solid rgba(245,240,232,.25);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      transition: border-color .3s;
+    }
+    .btn-ghost:hover .play-icon { border-color: rgba(245,240,232,.7); }
+
+    /* ── HERO VISUAL ── */
+    .hero-visual {
+      position: relative; z-index: 2;
+      display: flex; justify-content: center; align-items: center;
+    }
+    .hero-card-wrap {
+      position: relative;
+      opacity: 0;
+      animation: fadeIn 1.2s .5s forwards;
+    }
+    .hero-main-card {
+      width: 380px; height: 460px;
+      background: linear-gradient(160deg, #2d4a2d 0%, #1a2e1a 100%);
+      border-radius: 28px;
+      overflow: hidden;
+      position: relative;
+      border: 1px solid rgba(168,201,107,.2);
+      box-shadow: 0 40px 80px rgba(0,0,0,.4);
+    }
+    .animal-emoji {
+      font-size: 9rem;
+      position: absolute;
+      bottom: -10px; right: -10px;
+      filter: drop-shadow(0 10px 30px rgba(0,0,0,.3));
+      animation: float 4s ease-in-out infinite;
+      line-height: 1;
+    }
+    @keyframes float {
+      0%,100% { transform: translateY(0) rotate(-3deg); }
+      50% { transform: translateY(-18px) rotate(2deg); }
+    }
+    .hero-card-label {
+      position: absolute; top: 24px; left: 24px;
+      background: rgba(168,201,107,.2);
+      border: 1px solid rgba(168,201,107,.35);
+      border-radius: 50px;
+      padding: 6px 14px;
+      font-size: .75rem; color: var(--lime);
+      font-weight: 500; letter-spacing: .06em;
+      text-transform: uppercase;
+    }
+    .hero-card-info {
+      position: absolute; bottom: 24px; left: 24px; right: 100px;
+    }
+    .hero-card-info h3 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.6rem; color: var(--cream);
+      margin-bottom: 4px;
+    }
+    .hero-card-info p { font-size: .82rem; color: rgba(245,240,232,.5); }
+
+    .stat-badge {
+      position: absolute;
+      background: var(--white);
+      border-radius: 16px;
+      padding: 14px 18px;
+      box-shadow: 0 8px 32px rgba(0,0,0,.12);
+      display: flex; align-items: center; gap: 12px;
+    }
+    .stat-badge-1 { top: 30px; right: -60px; animation: floatBadge 5s 1s ease-in-out infinite; }
+    .stat-badge-2 { bottom: 80px; left: -70px; animation: floatBadge 4.5s 2s ease-in-out infinite; }
+    @keyframes floatBadge {
+      0%,100% { transform: translateY(0); }
+      50% { transform: translateY(-8px); }
+    }
+    .stat-icon { font-size: 1.6rem; }
+    .stat-num { font-family: 'Playfair Display', serif; font-size: 1.3rem; font-weight: 700; color: var(--forest); line-height: 1; }
+    .stat-label { font-size: .7rem; color: var(--muted); margin-top: 2px; }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(30px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to   { opacity: 1; }
+    }
+
+    /* ── SCROLL MARQUEE ── */
+    .marquee-wrap {
+      background: var(--lime);
+      overflow: hidden;
+      padding: 14px 0;
+      display: flex;
+    }
+    .marquee-track {
+      display: flex;
+      animation: marquee 22s linear infinite;
+      white-space: nowrap;
+    }
+    .marquee-track span {
+      font-size: .85rem; font-weight: 500;
+      color: var(--forest);
+      padding: 0 40px;
+      letter-spacing: .05em;
+      text-transform: uppercase;
+    }
+    .marquee-track span::after {
+      content: '✦';
+      margin-left: 40px;
+    }
+    @keyframes marquee {
+      from { transform: translateX(0); }
+      to   { transform: translateX(-50%); }
+    }
+
+    /* ── SECTION SHARED ── */
+    section { padding: 100px 60px; }
+    .section-label {
+      font-size: .75rem; font-weight: 500;
+      letter-spacing: .12em; text-transform: uppercase;
+      color: var(--sage); margin-bottom: 16px;
+    }
+    .section-title {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(2rem, 3.5vw, 3rem);
+      font-weight: 900; line-height: 1.15;
+      color: var(--forest);
+      margin-bottom: 20px;
+    }
+    .section-title em { font-style: italic; color: var(--terracota); }
+
+    /* ── ANIMALS ── */
+    #animals { background: var(--cream); }
+    .animals-header {
+      display: flex; align-items: flex-end;
+      justify-content: space-between;
+      margin-bottom: 56px;
+    }
+    .animals-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 24px;
+    }
+    .animal-card {
+      background: var(--white);
+      border-radius: 24px;
+      overflow: hidden;
+      cursor: pointer;
+      transition: transform var(--transition), box-shadow var(--transition);
+      position: relative;
+    }
+    .animal-card:hover {
+      transform: translateY(-10px);
+      box-shadow: 0 24px 60px rgba(26,46,26,.12);
+    }
+    .animal-card:first-child { grid-row: span 2; }
+    .card-thumb {
+      height: 200px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 5rem;
+      position: relative;
+      overflow: hidden;
+    }
+    .animal-card:first-child .card-thumb { height: 260px; }
+    .c1 { background: linear-gradient(135deg, #e8f3d6 0%, #c8e6a0 100%); }
+    .c2 { background: linear-gradient(135deg, #fde8d0 0%, #f5c89a 100%); }
+    .c3 { background: linear-gradient(135deg, #d0e8f5 0%, #a0c8e6 100%); }
+    .c4 { background: linear-gradient(135deg, #f5d0e8 0%, #e6a0c8 100%); }
+    .c5 { background: linear-gradient(135deg, #e8e0d0 0%, #d4c49a 100%); }
+    .card-body { padding: 20px 22px 24px; }
+    .card-zone {
+      font-size: .72rem; font-weight: 500;
+      letter-spacing: .08em; text-transform: uppercase;
+      color: var(--sage); margin-bottom: 6px;
+    }
+    .card-name {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.25rem; font-weight: 700;
+      color: var(--forest); margin-bottom: 6px;
+    }
+    .card-desc { font-size: .83rem; color: var(--muted); line-height: 1.6; }
+    .card-tag {
+      display: inline-block; margin-top: 14px;
+      background: rgba(92,122,62,.1);
+      color: var(--sage);
+      padding: 4px 12px; border-radius: 50px;
+      font-size: .72rem; font-weight: 500;
+    }
+
+    /* ── VISIT ── */
+    #visit {
+      background: var(--forest);
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 80px;
+      align-items: center;
+    }
+    #visit .section-title { color: var(--cream); }
+    #visit .section-label { color: var(--lime); }
+    .visit-desc {
+      font-size: 1rem; color: rgba(245,240,232,.6);
+      line-height: 1.8; margin-bottom: 40px;
+    }
+    .hours-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-top: 40px;
+    }
+    .hours-card {
+      background: rgba(255,255,255,.05);
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 18px;
+      padding: 20px 22px;
+      transition: background var(--transition);
+    }
+    .hours-card:hover { background: rgba(255,255,255,.09); }
+    .hours-day { font-size: .75rem; color: var(--lime); font-weight: 500; letter-spacing: .06em; text-transform: uppercase; margin-bottom: 6px; }
+    .hours-time { font-family: 'Playfair Display', serif; font-size: 1.5rem; color: var(--cream); }
+    .prices-wrap {
+      background: rgba(168,201,107,.08);
+      border: 1px solid rgba(168,201,107,.15);
+      border-radius: 28px;
+      padding: 40px;
+    }
+    .price-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.4rem; color: var(--cream);
+      margin-bottom: 28px;
+    }
+    .price-row {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 14px 0;
+      border-bottom: 1px solid rgba(255,255,255,.07);
+    }
+    .price-row:last-child { border-bottom: none; }
+    .price-type { font-size: .92rem; color: rgba(245,240,232,.7); }
+    .price-type span { display: block; font-size: .75rem; color: rgba(245,240,232,.35); margin-top: 2px; }
+    .price-amount {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.35rem; font-weight: 700;
+      color: var(--lime);
+    }
+
+    /* ── EVENTS ── */
+    #events { background: var(--white); }
+    .events-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 28px;
+      margin-top: 56px;
+    }
+    .event-card {
+      border: 1px solid rgba(26,46,26,.1);
+      border-radius: 24px;
+      overflow: hidden;
+      transition: box-shadow var(--transition), transform var(--transition);
+    }
+    .event-card:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 20px 50px rgba(26,46,26,.1);
+    }
+    .event-header {
+      padding: 28px 28px 0;
+      display: flex; justify-content: space-between; align-items: flex-start;
+    }
+    .event-date {
+      background: var(--forest);
+      color: var(--cream);
+      border-radius: 14px;
+      padding: 10px 16px;
+      text-align: center;
+    }
+    .event-day { font-family: 'Playfair Display', serif; font-size: 1.8rem; font-weight: 700; line-height: 1; }
+    .event-mon { font-size: .7rem; text-transform: uppercase; letter-spacing: .06em; opacity: .6; }
+    .event-emoji { font-size: 2.5rem; }
+    .event-body { padding: 20px 28px 28px; }
+    .event-cat { font-size: .72rem; font-weight: 500; letter-spacing: .08em; text-transform: uppercase; color: var(--terracota); margin-bottom: 8px; }
+    .event-name { font-family: 'Playfair Display', serif; font-size: 1.2rem; font-weight: 700; color: var(--forest); margin-bottom: 10px; }
+    .event-desc { font-size: .83rem; color: var(--muted); line-height: 1.6; margin-bottom: 20px; }
+    .event-footer { display: flex; justify-content: space-between; align-items: center; }
+    .event-price { font-weight: 500; font-size: .85rem; color: var(--forest); }
+    .event-price span { color: var(--sage); font-size: .75rem; font-weight: 400; margin-left: 4px; }
+    .btn-small {
+      background: var(--forest);
+      color: var(--cream);
+      border: none; cursor: pointer;
+      padding: 9px 20px;
+      border-radius: 50px;
+      font-size: .8rem; font-weight: 500;
+      transition: background .3s;
+      text-decoration: none;
+      display: inline-block;
+    }
+    .btn-small:hover { background: var(--sage); }
+
+    /* ── MAP / ZONES ── */
+    #zones { background: var(--sand); }
+    .zones-layout {
+      display: grid;
+      grid-template-columns: 1fr 1.4fr;
+      gap: 60px;
+      margin-top: 60px;
+    }
+    .zone-list { display: flex; flex-direction: column; gap: 12px; }
+    .zone-item {
+      display: flex; align-items: center; gap: 16px;
+      background: var(--white);
+      border-radius: 18px;
+      padding: 18px 22px;
+      cursor: pointer;
+      transition: all .3s;
+      border: 2px solid transparent;
+    }
+    .zone-item.active,
+    .zone-item:hover {
+      border-color: var(--sage);
+      background: rgba(92,122,62,.05);
+    }
+    .zone-icon { font-size: 1.8rem; }
+    .zone-name { font-weight: 500; color: var(--forest); font-size: .95rem; }
+    .zone-count { font-size: .78rem; color: var(--muted); margin-top: 2px; }
+    .zone-arrow { margin-left: auto; opacity: .3; transition: opacity .3s, transform .3s; }
+    .zone-item:hover .zone-arrow { opacity: 1; transform: translateX(4px); }
+
+    .map-illustration {
+      background: var(--white);
+      border-radius: 28px;
+      padding: 40px;
+      position: relative;
+      min-height: 440px;
+      overflow: hidden;
+    }
+    .map-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      grid-template-rows: repeat(3, 1fr);
+      gap: 12px;
+      height: 100%;
+      min-height: 360px;
+    }
+    .map-zone {
+      border-radius: 18px;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 8px;
+      font-size: 2rem;
+      transition: transform .3s, box-shadow .3s;
+      cursor: pointer;
+    }
+    .map-zone:hover { transform: scale(1.04); box-shadow: 0 8px 24px rgba(0,0,0,.1); }
+    .map-zone span { font-size: .72rem; font-weight: 500; color: var(--forest); letter-spacing: .04em; text-align: center; }
+    .mz1 { background: #e8f3d6; }
+    .mz2 { background: #fde8d0; grid-column: span 2; }
+    .mz3 { background: #d0e8f5; grid-row: span 2; }
+    .mz4 { background: #f5d0e8; }
+    .mz5 { background: #e8e0d0; }
+    .mz6 { background: #d6e8f3; }
+    .mz7 { background: #f3f0e8; grid-column: span 2; }
+
+    /* ── GALLERY ── */
+    #gallery { background: var(--forest); padding: 100px 60px; }
+    #gallery .section-title { color: var(--cream); }
+    #gallery .section-label { color: var(--lime); }
+    .gallery-subtitle { color: rgba(245,240,232,.55); font-size: 1rem; line-height: 1.7; max-width: 420px; margin-bottom: 56px; }
+    .gallery-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      grid-template-rows: 200px 200px;
+      gap: 16px;
+    }
+    .gallery-item {
+      border-radius: 20px;
+      overflow: hidden;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 4.5rem;
+      cursor: pointer;
+      transition: transform .3s, filter .3s;
+      position: relative;
+    }
+    .gallery-item:hover { transform: scale(1.03); }
+    .gallery-item:hover .gallery-overlay { opacity: 1; }
+    .gallery-overlay {
+      position: absolute; inset: 0;
+      background: rgba(26,46,26,.55);
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0; transition: opacity .3s;
+      font-size: 1.5rem; color: var(--cream);
+    }
+    .gi1 { background: #2d4a2d; grid-column: span 2; grid-row: span 2; font-size: 8rem; }
+    .gi2 { background: #3a5c3a; }
+    .gi3 { background: #2a4a3a; }
+    .gi4 { background: #4a5c2a; grid-column: span 2; }
+    .gi5 { background: #3a4a2a; }
+    .gi6 { background: #2a3a4a; }
+
+    /* ── NEWSLETTER ── */
+    #newsletter {
+      background: var(--lime);
+      padding: 80px 60px;
+      text-align: center;
+    }
+    .newsletter-inner { max-width: 560px; margin: 0 auto; }
+    .newsletter-label { font-size: .75rem; letter-spacing: .1em; text-transform: uppercase; color: var(--forest); opacity: .6; margin-bottom: 12px; font-weight: 500; }
+    .newsletter-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 2.5rem; font-weight: 900;
+      color: var(--forest); line-height: 1.15;
+      margin-bottom: 16px;
+    }
+    .newsletter-desc { color: rgba(26,46,26,.65); font-size: .95rem; line-height: 1.7; margin-bottom: 36px; }
+    .newsletter-form {
+      display: flex; gap: 12px;
+      background: var(--white);
+      border-radius: 50px;
+      padding: 6px 6px 6px 24px;
+      box-shadow: 0 8px 32px rgba(26,46,26,.15);
+    }
+    .newsletter-form input {
+      flex: 1; border: none; outline: none;
+      font-family: 'DM Sans', sans-serif;
+      font-size: .9rem; color: var(--text);
+      background: transparent;
+    }
+    .newsletter-form input::placeholder { color: var(--muted); }
+
+    /* ── FOOTER ── */
+    footer {
+      background: var(--forest);
+      padding: 70px 60px 36px;
+      color: rgba(245,240,232,.5);
+    }
+    .footer-top {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr 1fr;
+      gap: 60px;
+      margin-bottom: 56px;
+    }
+    .footer-brand .nav-logo { display: block; margin-bottom: 16px; }
+    .footer-brand p { font-size: .85rem; line-height: 1.8; max-width: 240px; }
+    .footer-col h4 {
+      font-size: .75rem; font-weight: 500;
+      letter-spacing: .1em; text-transform: uppercase;
+      color: var(--lime); margin-bottom: 20px;
+    }
+    .footer-col ul { list-style: none; display: flex; flex-direction: column; gap: 12px; }
+    .footer-col a {
+      text-decoration: none;
+      font-size: .85rem; color: rgba(245,240,232,.5);
+      transition: color .3s;
+    }
+    .footer-col a:hover { color: var(--cream); }
+    .footer-bottom {
+      border-top: 1px solid rgba(255,255,255,.07);
+      padding-top: 28px;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .footer-bottom p { font-size: .8rem; }
+    .social-links { display: flex; gap: 12px; }
+    .social-link {
+      width: 38px; height: 38px;
+      border: 1px solid rgba(255,255,255,.15);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1rem;
+      text-decoration: none;
+      transition: border-color .3s, background .3s;
+    }
+    .social-link:hover {
+      border-color: var(--lime);
+      background: rgba(168,201,107,.1);
+    }
+
+    /* ── SCROLL REVEAL ── */
+    .reveal {
+      opacity: 0;
+      transform: translateY(40px);
+      transition: opacity .7s ease, transform .7s ease;
+    }
+    .reveal.visible {
+      opacity: 1;
+      transform: none;
+    }
+
+    /* ── MODAL ── */
+    .modal-overlay {
+      position: fixed; inset: 0; z-index: 1000;
+      background: rgba(26,46,26,.7);
+      backdrop-filter: blur(8px);
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0; pointer-events: none;
+      transition: opacity .3s;
+    }
+    .modal-overlay.open { opacity: 1; pointer-events: all; }
+    .modal {
+      background: var(--white);
+      border-radius: 28px;
+      padding: 48px;
+      max-width: 480px; width: 90%;
+      transform: scale(.92);
+      transition: transform .35s cubic-bezier(.34,1.56,.64,1);
+      position: relative;
+    }
+    .modal-overlay.open .modal { transform: scale(1); }
+    .modal-close {
+      position: absolute; top: 20px; right: 20px;
+      background: none; border: none; font-size: 1.4rem;
+      cursor: pointer; color: var(--muted);
+      transition: color .3s;
+    }
+    .modal-close:hover { color: var(--forest); }
+    .modal-emoji { font-size: 5rem; display: block; margin-bottom: 20px; }
+    .modal-title { font-family: 'Playfair Display', serif; font-size: 2rem; font-weight: 700; color: var(--forest); margin-bottom: 10px; }
+    .modal-meta { font-size: .78rem; color: var(--sage); font-weight: 500; letter-spacing: .06em; text-transform: uppercase; margin-bottom: 16px; }
+    .modal-desc { font-size: .92rem; color: var(--muted); line-height: 1.75; }
+    .modal-facts { display: flex; gap: 16px; margin-top: 24px; flex-wrap: wrap; }
+    .fact-chip {
+      background: rgba(92,122,62,.1);
+      border-radius: 50px;
+      padding: 6px 14px;
+      font-size: .78rem; color: var(--sage); font-weight: 500;
+    }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 1024px) {
+      nav { padding: 16px 28px; }
+      .nav-links { display: none; }
+      #hero { grid-template-columns: 1fr; padding: 120px 28px 60px; }
+      .hero-visual { margin-top: 60px; }
+      .animals-grid { grid-template-columns: repeat(2, 1fr); }
+      .animal-card:first-child { grid-row: auto; }
+      #visit { grid-template-columns: 1fr; gap: 48px; }
+      .zones-layout { grid-template-columns: 1fr; }
+      .gallery-grid { grid-template-columns: repeat(3, 1fr); }
+      .gi1 { grid-column: span 1; grid-row: span 1; font-size: 4.5rem; }
+      .gi4 { grid-column: span 1; }
+      .footer-top { grid-template-columns: 1fr 1fr; gap: 32px; }
+      section { padding: 70px 28px; }
+      #events { padding: 70px 28px; }
+      .events-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Cursor -->
+<div class="cursor" id="cursor"></div>
+<div class="cursor-ring" id="cursorRing"></div>
+
+<!-- NAV -->
+<nav id="navbar">
+  <a href="#" class="nav-logo">Zoo<span>Verse</span></a>
+  <ul class="nav-links">
+    <li><a href="#animals">Животные</a></li>
+    <li><a href="#visit">Посещение</a></li>
+    <li><a href="#events">События</a></li>
+    <li><a href="#zones">Зоны</a></li>
+    <li><a href="#newsletter" class="nav-cta">Купить билет</a></li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<section id="hero">
+  <div class="hero-bg-pattern"></div>
+  <div class="hero-content">
+    <div class="hero-tag">🌿 Открыто каждый день</div>
+    <h1 class="hero-title">
+      Мир дикой<br /><em>природы</em><br />у твоих ног
+    </h1>
+    <p class="hero-desc">
+      ZooVerse — живое путешествие по пяти континентам без перелётов.
+      Более 3 000 животных, интерактивные зоны и незабываемые впечатления для всей семьи.
+    </p>
+    <div class="hero-actions">
+      <button class="btn-primary" onclick="openModal('lion', '🦁', 'Африканский лев', 'Африка', 'Царь саванны, живущий в прайдах. Наш прайд из пяти особей — один из крупнейших в Европе.', ['Возраст: 7 лет', 'Вес: 190 кг', 'Зона: Африка'])">
+        Познакомиться с животными →
+      </button>
+      <button class="btn-ghost">
+        <span class="play-icon">▶</span>
+        Виртуальный тур
+      </button>
+    </div>
+  </div>
+
+  <div class="hero-visual">
+    <div class="hero-card-wrap">
+      <div class="hero-main-card">
+        <div class="hero-card-label">⭐ Звезда сезона</div>
+        <div class="animal-emoji">🦁</div>
+        <div class="hero-card-info">
+          <h3>Симба</h3>
+          <p>Африканский лев · Зона Саванна</p>
+        </div>
+      </div>
+      <div class="stat-badge stat-badge-1">
+        <div class="stat-icon">🐾</div>
+        <div>
+          <div class="stat-num">3 000+</div>
+          <div class="stat-label">животных</div>
+        </div>
+      </div>
+      <div class="stat-badge stat-badge-2">
+        <div class="stat-icon">🌍</div>
+        <div>
+          <div class="stat-num">5</div>
+          <div class="stat-label">континентов</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- MARQUEE -->
+<div class="marquee-wrap">
+  <div class="marquee-track">
+    <span>Африканская саванна</span>
+    <span>Тропический лес</span>
+    <span>Арктическая зона</span>
+    <span>Океанариум</span>
+    <span>Детский зоопарк</span>
+    <span>Ночное сафари</span>
+    <span>Африканская саванна</span>
+    <span>Тропический лес</span>
+    <span>Арктическая зона</span>
+    <span>Океанариум</span>
+    <span>Детский зоопарк</span>
+    <span>Ночное сафари</span>
+  </div>
+</div>
+
+<!-- ANIMALS -->
+<section id="animals">
+  <div class="animals-header reveal">
+    <div>
+      <div class="section-label">Наши обитатели</div>
+      <h2 class="section-title">Познакомьтесь<br />с жителями <em>ZooVerse</em></h2>
+    </div>
+    <a href="#" class="btn-small">Все животные →</a>
+  </div>
+  <div class="animals-grid reveal">
+    <div class="animal-card" onclick="openModal('lion','🦁','Африканский лев','Африка · Саванна','Величественный хищник африканских равнин. Наш прайд из пяти особей живёт в просторном вольере площадью 2 га, максимально воссоздающем условия естественной среды обитания.', ['Возраст: 7 лет','Вес: 190 кг','Ест: 8 кг/день','Статус: уязвимый'])">
+      <div class="card-thumb c1"><span class="animal-emoji" style="font-size:5rem;position:relative;animation:float 4s ease-in-out infinite;">🦁</span></div>
+      <div class="card-body">
+        <div class="card-zone">🌍 Африка · Саванна</div>
+        <div class="card-name">Африканский лев</div>
+        <div class="card-desc">Царь зверей. Живёт прайдами до 30 особей, охотится ночью.</div>
+        <span class="card-tag">Хищник</span>
+      </div>
+    </div>
+    <div class="animal-card" onclick="openModal('elephant','🐘','Азиатский слон','Азия · Тропики','Интеллектуальные гиганты с феноменальной памятью. Наша группа из трёх слонов участвует в ежедневных обогатительных программах.', ['Возраст: 22 года','Вес: 4 200 кг','Ест: 150 кг/день','Статус: под угрозой'])">
+      <div class="card-thumb c2">🐘</div>
+      <div class="card-body">
+        <div class="card-zone">🌏 Азия · Тропики</div>
+        <div class="card-name">Азиатский слон</div>
+        <div class="card-desc">Умный и эмоциональный. Помнит всё на свете.</div>
+        <span class="card-tag">Травоядный</span>
+      </div>
+    </div>
+    <div class="animal-card" onclick="openModal('penguin','🐧','Пингвин Гумбольдта','Антарктика · Арктика','Эти очаровательные птицы моря живут в нашем климатическом павильоне при −5°C. Ежедневные кормления в 11:00 и 15:00.', ['Возраст: 5 лет','Вес: 4.5 кг','Ест: 500 г/день','Статус: уязвимый'])">
+      <div class="card-thumb c3">🐧</div>
+      <div class="card-body">
+        <div class="card-zone">❄️ Арктика</div>
+        <div class="card-name">Пингвин Гумбольдта</div>
+        <div class="card-desc">Бесстрашный ныряльщик, достигающий 50 км/ч под водой.</div>
+        <span class="card-tag">Птица</span>
+      </div>
+    </div>
+    <div class="animal-card" onclick="openModal('tiger','🐯','Амурский тигр','Азия · Тайга','Крупнейший представитель семейства кошачьих. Под угрозой исчезновения — в дикой природе осталось менее 500 особей.', ['Возраст: 4 года','Вес: 220 кг','Ест: 12 кг/день','Статус: под угрозой'])">
+      <div class="card-thumb c4">🐯</div>
+      <div class="card-body">
+        <div class="card-zone">🌿 Азия · Тайга</div>
+        <div class="card-name">Амурский тигр</div>
+        <div class="card-desc">Самый крупный из тигров. В дикой природе менее 500 особей.</div>
+        <span class="card-tag">Под угрозой</span>
+      </div>
+    </div>
+    <div class="animal-card" onclick="openModal('giraffe','🦒','Сетчатый жираф','Африка · Саванна','Самое высокое животное на Земле — до 5.8 м. Вы можете лично покормить жирафов на специальной платформе ежедневно в 10:00 и 14:00.', ['Возраст: 9 лет','Рост: 5.4 м','Ест: 30 кг/день','Статус: уязвимый'])">
+      <div class="card-thumb c5">🦒</div>
+      <div class="card-body">
+        <div class="card-zone">🌍 Африка</div>
+        <div class="card-name">Сетчатый жираф</div>
+        <div class="card-desc">Самое высокое животное Земли. Покормите его лично!</div>
+        <span class="card-tag">Интерактив</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- VISIT -->
+<section id="visit">
+  <div class="reveal">
+    <div class="section-label">Планируйте визит</div>
+    <h2 class="section-title">Время и цены</h2>
+    <p class="visit-desc">
+      ZooVerse работает 365 дней в году. Мы верим, что общение с природой
+      должно быть доступным для каждого.
+    </p>
+    <a href="#newsletter" class="btn-primary" style="display:inline-flex;">Купить билет онлайн →</a>
+    <div class="hours-grid">
+      <div class="hours-card">
+        <div class="hours-day">Пн – Пт</div>
+        <div class="hours-time">9:00 – 19:00</div>
+      </div>
+      <div class="hours-card">
+        <div class="hours-day">Сб – Вс</div>
+        <div class="hours-time">8:00 – 21:00</div>
+      </div>
+      <div class="hours-card">
+        <div class="hours-day">Праздники</div>
+        <div class="hours-time">9:00 – 20:00</div>
+      </div>
+      <div class="hours-card">
+        <div class="hours-day">Ночное сафари</div>
+        <div class="hours-time">21:00 – 23:30</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="reveal" style="transition-delay:.2s">
+    <div class="prices-wrap">
+      <div class="price-title">Стоимость билетов</div>
+      <div class="price-row">
+        <div class="price-type">Взрослый<span>18–64 года</span></div>
+        <div class="price-amount">890 ₽</div>
+      </div>
+      <div class="price-row">
+        <div class="price-type">Детский<span>4–17 лет</span></div>
+        <div class="price-amount">490 ₽</div>
+      </div>
+      <div class="price-row">
+        <div class="price-type">Пенсионный<span>65+ лет</span></div>
+        <div class="price-amount">450 ₽</div>
+      </div>
+      <div class="price-row">
+        <div class="price-type">Семейный<span>2 взрослых + 2 детей</span></div>
+        <div class="price-amount">2 100 ₽</div>
+      </div>
+      <div class="price-row">
+        <div class="price-type">Годовой абонемент<span>Неограниченное посещение</span></div>
+        <div class="price-amount">3 900 ₽</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- EVENTS -->
+<section id="events">
+  <div class="reveal">
+    <div class="section-label">Что происходит</div>
+    <h2 class="section-title">Ближайшие <em>события</em></h2>
+  </div>
+  <div class="events-grid reveal">
+    <div class="event-card">
+      <div class="event-header">
+        <div class="event-date"><div class="event-day">15</div><div class="event-mon">Июн</div></div>
+        <div class="event-emoji">🦁</div>
+      </div>
+      <div class="event-body">
+        <div class="event-cat">Кормление</div>
+        <div class="event-name">День льва: специальное кормление</div>
+        <div class="event-desc">Наблюдайте за кормлением нашего прайда с безопасного мостика-наблюдения. Зоолог расскажет о поведении и охотничьих инстинктах.</div>
+        <div class="event-footer">
+          <div class="event-price">Бесплатно <span>с билетом</span></div>
+          <a href="#" class="btn-small">Записаться</a>
+        </div>
+      </div>
+    </div>
+    <div class="event-card">
+      <div class="event-header">
+        <div class="event-date" style="background:var(--terracota)"><div class="event-day">22</div><div class="event-mon">Июн</div></div>
+        <div class="event-emoji">🌙</div>
+      </div>
+      <div class="event-body">
+        <div class="event-cat" style="color:var(--amber)">Ночной тур</div>
+        <div class="event-name">Ночное сафари: тайная жизнь зоопарка</div>
+        <div class="event-desc">Откройте тёмную сторону зоопарка! Узнайте, чем занимаются животные, когда посетители расходятся по домам. С фонариками и гидом.</div>
+        <div class="event-footer">
+          <div class="event-price">590 ₽ <span>чел</span></div>
+          <a href="#" class="btn-small">Забронировать</a>
+        </div>
+      </div>
+    </div>
+    <div class="event-card">
+      <div class="event-header">
+        <div class="event-date" style="background:var(--sage)"><div class="event-day">29</div><div class="event-mon">Июн</div></div>
+        <div class="event-emoji">🐘</div>
+      </div>
+      <div class="event-body">
+        <div class="event-cat" style="color:var(--sage)">Мастер-класс</div>
+        <div class="event-name">Слоны-художники: арт-сессия</div>
+        <div class="event-desc">Наши слоны создадут картину прямо у вас на глазах, и вы сможете приобрести оригинальное произведение искусства, созданное природой.</div>
+        <div class="event-footer">
+          <div class="event-price">350 ₽ <span>чел</span></div>
+          <a href="#" class="btn-small">Участвовать</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ZONES -->
+<section id="zones">
+  <div class="reveal">
+    <div class="section-label">Инфраструктура</div>
+    <h2 class="section-title">Зоны <em>ZooVerse</em></h2>
+  </div>
+  <div class="zones-layout">
+    <div class="zone-list reveal">
+      <div class="zone-item active" onclick="highlightZone(this)">
+        <div class="zone-icon">🌍</div>
+        <div><div class="zone-name">Африканская саванна</div><div class="zone-count">12 видов животных</div></div>
+        <div class="zone-arrow">→</div>
+      </div>
+      <div class="zone-item" onclick="highlightZone(this)">
+        <div class="zone-icon">🌴</div>
+        <div><div class="zone-name">Тропический лес</div><div class="zone-count">28 видов животных</div></div>
+        <div class="zone-arrow">→</div>
+      </div>
+      <div class="zone-item" onclick="highlightZone(this)">
+        <div class="zone-icon">❄️</div>
+        <div><div class="zone-name">Арктическая зона</div><div class="zone-count">8 видов животных</div></div>
+        <div class="zone-arrow">→</div>
+      </div>
+      <div class="zone-item" onclick="highlightZone(this)">
+        <div class="zone-icon">🌊</div>
+        <div><div class="zone-name">Океанариум</div><div class="zone-count">150 видов рыб</div></div>
+        <div class="zone-arrow">→</div>
+      </div>
+      <div class="zone-item" onclick="highlightZone(this)">
+        <div class="zone-icon">🐣</div>
+        <div><div class="zone-name">Детский зоопарк</div><div class="zone-count">Контактные животные</div></div>
+        <div class="zone-arrow">→</div>
+      </div>
+      <div class="zone-item" onclick="highlightZone(this)">
+        <div class="zone-icon">🦅</div>
+        <div><div class="zone-name">Птичий вольер</div><div class="zone-count">200 видов птиц</div></div>
+        <div class="zone-arrow">→</div>
+      </div>
+    </div>
+
+    <div class="map-illustration reveal" style="transition-delay:.15s">
+      <div class="map-grid">
+        <div class="map-zone mz1">🌍<span>Саванна</span></div>
+        <div class="map-zone mz2">🌴<span>Тропики</span></div>
+        <div class="map-zone mz3">🌊<span>Океанариум</span></div>
+        <div class="map-zone mz4">❄️<span>Арктика</span></div>
+        <div class="map-zone mz5">🐣<span>Детский</span></div>
+        <div class="map-zone mz6">🦅<span>Птичий вольер</span></div>
+        <div class="map-zone mz7">🎪<span>Главный вход · Касса · Кафе</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- GALLERY -->
+<section id="gallery">
+  <div class="reveal">
+    <div class="section-label">Фотогалерея</div>
+    <h2 class="section-title">Живые моменты</h2>
+    <p class="gallery-subtitle">Каждый день — новые истории. Загляните в нашу галерею и почувствуйте атмосферу ZooVerse.</p>
+  </div>
+  <div class="gallery-grid reveal">
+    <div class="gallery-item gi1">🦁<div class="gallery-overlay">🔍</div></div>
+    <div class="gallery-item gi2">🐧<div class="gallery-overlay">🔍</div></div>
+    <div class="gallery-item gi3">🐘<div class="gallery-overlay">🔍</div></div>
+    <div class="gallery-item gi4">🦒<div class="gallery-overlay">🔍</div></div>
+    <div class="gallery-item gi5">🐯<div class="gallery-overlay">🔍</div></div>
+    <div class="gallery-item gi6">🐬<div class="gallery-overlay">🔍</div></div>
+  </div>
+</section>
+
+<!-- NEWSLETTER -->
+<section id="newsletter">
+  <div class="newsletter-inner reveal">
+    <div class="newsletter-label">Оставайтесь на связи</div>
+    <h2 class="newsletter-title">Получайте новости<br />первыми 🦁</h2>
+    <p class="newsletter-desc">Анонсы событий, рождение детёнышей, скидки на билеты — только самое важное, без спама.</p>
+    <div class="newsletter-form">
+      <input type="email" placeholder="Ваш email адрес" id="emailInput" />
+      <button class="btn-primary" onclick="subscribeEmail()" style="flex-shrink:0">Подписаться</button>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-top">
+    <div class="footer-brand">
+      <a href="#" class="nav-logo">Zoo<span>Verse</span></a>
+      <p>Живой мир рядом. Открыт 365 дней в году. Место, где природа встречает человека.</p>
+    </div>
+    <div class="footer-col">
+      <h4>Зоопарк</h4>
+      <ul>
+        <li><a href="#">О нас</a></li>
+        <li><a href="#">Животные</a></li>
+        <li><a href="#">Зоны</a></li>
+        <li><a href="#">Галерея</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>Визит</h4>
+      <ul>
+        <li><a href="#">Билеты</a></li>
+        <li><a href="#">Часы работы</a></li>
+        <li><a href="#">Как добраться</a></li>
+        <li><a href="#">Группы</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>Контакты</h4>
+      <ul>
+        <li><a href="#">+7 (495) 123-45-67</a></li>
+        <li><a href="#">info@zooverse.ru</a></li>
+        <li><a href="#">Ленинский пр-т, 92</a></li>
+        <li><a href="#">Пресс-центр</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <p>© 2024 ZooVerse. Все права защищены. <span style="opacity:.4">v0.1 — макет</span></p>
+    <div class="social-links">
+      <a href="#" class="social-link">📸</a>
+      <a href="#" class="social-link">💬</a>
+      <a href="#" class="social-link">🐦</a>
+      <a href="#" class="social-link">▶️</a>
+    </div>
+  </div>
+</footer>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModalOutside(event)">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <span class="modal-emoji" id="modalEmoji"></span>
+    <div class="modal-meta" id="modalMeta"></div>
+    <div class="modal-title" id="modalTitle"></div>
+    <div class="modal-desc" id="modalDesc"></div>
+    <div class="modal-facts" id="modalFacts"></div>
+  </div>
+</div>
+
+<script>
+  /* ── CURSOR ── */
+  const cursor = document.getElementById('cursor');
+  const ring = document.getElementById('cursorRing');
+  let mx = 0, my = 0, rx = 0, ry = 0;
+  document.addEventListener('mousemove', e => { mx = e.clientX; my = e.clientY; });
+  function animateCursor() {
+    cursor.style.left = mx + 'px'; cursor.style.top = my + 'px';
+    rx += (mx - rx) * .12; ry += (my - ry) * .12;
+    ring.style.left = rx + 'px'; ring.style.top = ry + 'px';
+    requestAnimationFrame(animateCursor);
+  }
+  animateCursor();
+
+  /* ── NAVBAR SCROLL ── */
+  window.addEventListener('scroll', () => {
+    document.getElementById('navbar').classList.toggle('scrolled', window.scrollY > 60);
+  });
+
+  /* ── SCROLL REVEAL ── */
+  const reveals = document.querySelectorAll('.reveal');
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); } });
+  }, { threshold: 0.12 });
+  reveals.forEach(el => observer.observe(el));
+
+  /* ── MODAL ── */
+  function openModal(id, emoji, title, meta, desc, facts) {
+    document.getElementById('modalEmoji').textContent = emoji;
+    document.getElementById('modalTitle').textContent = title;
+    document.getElementById('modalMeta').textContent = meta;
+    document.getElementById('modalDesc').textContent = desc;
+    const factsEl = document.getElementById('modalFacts');
+    factsEl.innerHTML = facts.map(f => `<span class="fact-chip">${f}</span>`).join('');
+    document.getElementById('modalOverlay').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeModal() {
+    document.getElementById('modalOverlay').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+  function closeModalOutside(e) {
+    if (e.target === document.getElementById('modalOverlay')) closeModal();
+  }
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+  /* ── ZONES ── */
+  function highlightZone(el) {
+    document.querySelectorAll('.zone-item').forEach(z => z.classList.remove('active'));
+    el.classList.add('active');
+  }
+
+  /* ── NEWSLETTER ── */
+  function subscribeEmail() {
+    const input = document.getElementById('emailInput');
+    if (input.value && input.value.includes('@')) {
+      input.value = '';
+      input.placeholder = '✅ Вы подписаны! Спасибо';
+      setTimeout(() => { input.placeholder = 'Ваш email адрес'; }, 3000);
+    } else {
+      input.style.outline = '2px solid var(--terracota)';
+      setTimeout(() => { input.style.outline = 'none'; }, 1500);
+    }
+  }
+
+  /* ── SMOOTH ANIMALS HOVER ── */
+  document.querySelectorAll('.animal-card').forEach(card => {
+    card.addEventListener('mouseenter', () => cursor.style.transform = 'translate(-50%,-50%) scale(3)');
+    card.addEventListener('mouseleave', () => cursor.style.transform = 'translate(-50%,-50%) scale(1)');
+  });
+</script>
+</body>
+</html>

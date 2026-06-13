@@ -1,35 +1,29 @@
-@import './base.css';
+@import 'tailwindcss';
+@plugin "daisyui";
 
-#app {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  font-weight: normal;
-}
+@theme {
+  /* Brand colors */
+  --color-forest-400: oklch(0.2776 0.0445 144.26);
+  --color-forest-300: oklch(0.3774 0.0598 144.28);
+  --color-forest-200: oklch(0.5413 0.0931 130.75);
+  --color-forest-100: oklch(0.7907 0.1268 125.09);
 
-a,
-.green {
-  text-decoration: none;
-  color: hsla(160, 100%, 37%, 1);
-  transition: 0.4s;
-  padding: 3px;
-}
+  --color-moss: #2d4a2d;
+  --color-sage: #5c7a3e;
+  --color-lime: #a8c96b;
 
-@media (hover: hover) {
-  a:hover {
-    background-color: hsla(160, 100%, 37%, 0.2);
-  }
-}
+  --color-cream-100: oklch(0.9568 0.0119 79.78);
+  --color-sand-100: oklch(0.8883 0.0503 88.08);
 
-@media (min-width: 1024px) {
-  body {
-    display: flex;
-    place-items: center;
-  }
+  --color-terracotta: #c4602a;
+  --color-amber: #e8933a;
+  --color-white: #fdfaf5;
 
-  #app {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    padding: 0 2rem;
-  }
+  --color-text: #1a1a18;
+  --color-muted: #6b6b5a;
+
+  /* Design tokens */
+  --radius-box: 16px;
+  --ease-smooth: cubic-bezier(0.25, 0.8, 0.25, 1);
+  --duration-smooth: 0.45s;
 }
