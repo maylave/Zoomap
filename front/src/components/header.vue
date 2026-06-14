@@ -3,29 +3,29 @@
     <nav
       class="flex items-center justify-between px-6 lg:px-16"
       :class="{
-        'h-16 bg-neutral-900/80 backdrop-blur-xl border-b border-white/5': isScrolled,
-        'h-20 bg-transparent': !isScrolled
+        'h-16 border-b border-white/5 bg-neutral-900/80 backdrop-blur-xl': isScrolled,
+        'h-20 bg-transparent': !isScrolled,
       }"
     >
       <!-- Logo -->
-      <a href="#" class="text-2xl font-black tracking-tight text-cream-100 whitespace-nowrap group">
+      <a href="#" class="text-cream-100 group text-2xl font-black tracking-tight whitespace-nowrap">
         Zoo<span class="text-lime group-hover:text-lime/80 transition-colors">Verse</span>
       </a>
 
       <!-- Desktop Menu -->
-      <ul class="hidden md:flex items-center gap-8 lg:gap-10">
+      <ul class="hidden items-center gap-8 md:flex lg:gap-10">
         <template v-for="(block, index) in blocks" :key="index">
           <template v-if="block.links">
             <li v-for="link in block.links" :key="link.path">
               <a
                 :href="link.path"
-                class="relative text-sm font-medium text-cream-100/70 transition-colors hover:text-lime py-2"
+                class="text-cream-100/70 hover:text-lime relative py-2 text-sm font-medium transition-colors"
               >
                 {{ link.name }}
                 <!-- Активная линия -->
-                <span 
-                  class="absolute bottom-0 left-0 h-0.5 bg-lime w-0 transition-all duration-300 group-hover:w-full"
-                  :class="{ 'w-full': link.active }" 
+                <span
+                  class="bg-lime absolute bottom-0 left-0 h-0.5 w-0 transition-all duration-300 group-hover:w-full"
+                  :class="{ 'w-full': link.active }"
                 />
               </a>
             </li>
@@ -50,52 +50,59 @@
         <li>
           <a
             href="#visit"
-            class="btn btn-lime border border-transparent rounded-full px-6 py-2.5 text-sm font-bold text-forest-900 hover:bg-lime/80 transition-all hover:scale-105 shadow-[0_0_15px_rgba(168,201,107,0.3)]"
+            class="btn btn-lime text-forest-900 hover:bg-lime/80 rounded-full border border-transparent px-6 py-2.5 text-sm font-bold shadow-[0_0_15px_rgba(168,201,107,0.3)] transition-all hover:scale-105"
           >
             Купить билет
           </a>
         </li>
 
         <!-- USER DROPDOWN (Обернуто в group/user для hover) -->
-        <li class="relative group/user">
-          <button 
-            class="flex items-center gap-2 px-4 py-1.5 rounded-full border border-white/5 hover:bg-white/10 hover:border-lime-400/50 hover:-translate-y-0.5 transition-all duration-300"
+        <li class="group/user relative">
+          <button
+            class="flex items-center gap-2 rounded-full border border-white/5 px-4 py-1.5 transition-all duration-300 hover:-translate-y-0.5 hover:border-lime-400/50 hover:bg-white/10"
             aria-label="User profile"
           >
             <!-- Аватар -->
             <div class="relative">
-              <div class="w-9 h-9 rounded-full bg-gradient-to-br from-lime-400 to-amber-400 flex items-center justify-center text-sm font-bold text-forest-900 shadow-inner group-hover/user:scale-110 transition-transform duration-300">
+              <div
+                class="text-forest-900 flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-lime-400 to-amber-400 text-sm font-bold shadow-inner transition-transform duration-300 group-hover/user:scale-110"
+              >
                 U
               </div>
               <!-- Индикатор онлайна -->
-              <span class="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-lime-400 rounded-full border-2 border-forest-900 ring-2 ring-forest-900/50"></span>
+              <span
+                class="border-forest-900 ring-forest-900/50 absolute -right-0.5 -bottom-0.5 h-3 w-3 rounded-full border-2 bg-lime-400 ring-2"
+              ></span>
             </div>
-           
+
             <!-- Иконка стрелки -->
-            <BaseIcon 
-              name="arrowDown" 
-              size="sm" 
+            <BaseIcon
+              name="arrowDown"
+              size="sm"
               color="text-white/80 group-hover/user:text-lime-400 group-hover/user:rotate-180"
               class="transition-all duration-1200"
             />
           </button>
 
           <!-- Выпадающий список (Появляется при наведении на group/user) -->
-          <div 
-            class="absolute top-full right-0 mt-2 w-40 py-2 rounded-2xl bg-forest-200/60 border border-white/10 backdrop-blur-xl shadow-2xl shadow-black/60 z-50
-                   opacity-0 invisible translate-y-2 transition-all duration-200 ease-out
-                   group-hover/user:opacity-100 group-hover/user:visible group-hover/user:translate-y-0"
+          <div
+            class="bg-forest-200/60 invisible absolute top-full right-0 z-50 mt-2 w-40 translate-y-2 rounded-2xl border border-white/10 py-2 opacity-0 shadow-2xl shadow-black/60 backdrop-blur-xl transition-all duration-200 ease-out group-hover/user:visible group-hover/user:translate-y-0 group-hover/user:opacity-100"
           >
             <!-- Пункт: Профиль -->
-            <button class="block w-full text-left text-white/80 px-3 py-1.5 rounded-xl  hover:text-lime-400 transition-colors">
+            <button
+              class="block w-full rounded-xl px-3 py-1.5 text-left text-white/80 transition-colors hover:text-lime-400"
+               @click="emit('openProfile')"
+            >
               Профиль
             </button>
-            
+
             <!-- Разделитель -->
-            <div class="w-full h-px bg-white/10 my-1"></div>
-            
+            <div class="my-1 h-px w-full bg-white/10"></div>
+
             <!-- Пункт: Выйти -->
-            <button class="block w-full text-left text-white/80 px-3 rounded-xl py-1.5  hover:text-red-400 transition-colors">
+            <button
+              class="block w-full rounded-xl px-3 py-1.5 text-left text-white/80 transition-colors hover:text-red-400"
+            >
               Выйти
             </button>
           </div>
@@ -103,13 +110,20 @@
       </ul>
 
       <!-- Mobile Burger -->
-      <button
-        class="md:hidden text-cream-100 p-2"
-        @click="toggleMenu"
-        aria-label="Меню"
-      >
-        <svg xmlns="http://www.w3.org/2000/svg" class="size-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+      <button class="text-cream-100 p-2 md:hidden" @click="toggleMenu" aria-label="Меню">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="size-7"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M4 6h16M4 12h16M4 18h16"
+          />
         </svg>
       </button>
     </nav>
@@ -125,7 +139,7 @@
     >
       <div
         v-if="isMenuOpen"
-        class="absolute top-full left-0 right-0 flex flex-col gap-2 border-b border-white/10 bg-neutral-900/95 p-6 backdrop-blur-xl md:hidden shadow-2xl"
+        class="absolute top-full right-0 left-0 flex flex-col gap-2 border-b border-white/10 bg-neutral-900/95 p-6 shadow-2xl backdrop-blur-xl md:hidden"
       >
         <template v-for="(block, index) in blocks" :key="index">
           <template v-if="block.links">
@@ -134,7 +148,7 @@
               :key="link.path"
               :href="link.path"
               @click="closeMenu"
-              class="py-3 text-lg font-medium text-cream-100/80 border-b border-white/5 last:border-0 hover:text-lime hover:pl-2 transition-all"
+              class="text-cream-100/80 hover:text-lime border-b border-white/5 py-3 text-lg font-medium transition-all last:border-0 hover:pl-2"
             >
               {{ link.name }}
             </a>
@@ -144,14 +158,12 @@
         <a
           href="#visit"
           @click="closeMenu"
-          class="btn btn-lime border border-amber-50 mt-4 w-full py-3 text-center font-bold text-forest-900"
+          class="btn btn-lime text-forest-900 mt-4 w-full border border-amber-50 py-3 text-center font-bold"
         >
           Купить билет
         </a>
       </div>
     </Transition>
-    
-
   </header>
 </template>
 
@@ -171,30 +183,35 @@ interface NavBlock {
   socials?: { url: string; icon: string }[]
 }
 
-const props = withDefaults(defineProps<{
-  blocks?: NavBlock[]
-}>(), {
-  blocks: () => [
-    {
-      links: [
-        { name: 'События', path: '#events' },
-        { name: 'Галерея', path: '#gallery' },
-        { name: 'Визит', path: '#visit' },
-      ]
-    },
-    {
-      socials: [
-        { url: 'https://t.me', icon: 'telegram' },
-        { url: 'https://vk.com', icon: 'vk' }
-      ]
-    }
-  ]
-})
-
+const props = withDefaults(
+  defineProps<{
+    blocks?: NavBlock[]
+  }>(),
+  {
+    blocks: () => [
+      {
+        links: [
+          { name: 'События', path: '#events' },
+          { name: 'Галерея', path: '#gallery' },
+          { name: 'Визит', path: '#visit' },
+        ],
+      },
+      {
+        socials: [
+          { url: 'https://t.me', icon: 'telegram' },
+          { url: 'https://vk.com', icon: 'vk' },
+        ],
+      },
+    ],
+  }
+)
+const emit = defineEmits<{
+  (e: 'openProfile'): void
+}>()
 const isScrolled = ref(false)
 const isMenuOpen = ref(false)
 
-// Переменная для isOpenUser больше не нужна для десктопа (работает через CSS), 
+// Переменная для isOpenUser больше не нужна для десктопа (работает через CSS),
 // но оставим, если захотите использовать для клика на мобилках.
 const isOpenUser = ref(false)
 
@@ -218,7 +235,7 @@ const closeMenu = () => {
 }
 
 const getIcon = (icon: string) => {
-  return 'span' 
+  return 'span'
 }
 
 onMounted(() => {
@@ -238,8 +255,8 @@ html {
 }
 
 .btn-lime {
-  background-color: #a8c96b; 
-  color: #1a2e1a; 
+  background-color: #a8c96b;
+  color: #1a2e1a;
 }
 .btn-lime:hover {
   background-color: #96b85a;
@@ -247,6 +264,6 @@ html {
 
 /* Анимация для стрелки вниз при наведении (если BaseIcon не поддерживает rotate) */
 .group\/user:hover .arrow-down-icon {
-   transform: rotate(180deg);
+  transform: rotate(180deg);
 }
 </style>

@@ -8,11 +8,14 @@
         : 'text-white/70 hover:bg-white/5 hover:text-white'
     ]"
   >
-    <component 
-      :is="icon" 
-      class="w-4 h-4 shrink-0 transition-transform duration-200 group-hover:scale-110"
+    <!-- ✅ Используем BaseIcon вместо <component :is="icon"> -->
+    <BaseIcon 
+      :name="icon" 
+      size="sm"
+      class="shrink-0 transition-transform duration-200 group-hover:scale-110"
       :class="isActive ? 'text-lime' : 'text-white/50'"
     />
+    
     <span class="truncate">{{ label }}</span>
     
     <!-- Бейдж -->
@@ -26,12 +29,13 @@
 </template>
 
 <script lang="ts" setup>
-import { type Component } from 'vue'
+import type { IconName } from '@/icons'  // ✅ Импортируем IconName
+import BaseIcon from '../BaseIcon.vue'   // ✅ Импортируем BaseIcon
 
 defineProps<{
   id: string
   label: string
-  icon: Component
+  icon: IconName  // ✅ IconName вместо Component
   isActive?: boolean
   badge?: string | number
 }>()

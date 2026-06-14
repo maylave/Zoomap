@@ -22,13 +22,13 @@
 </template>
 
 <script lang="ts" setup>
-import { type Component } from 'vue'
+import type { IconName } from '@/icons'  // ✅ Импортируем IconName
 import SidebarMenuItem from './SidebarMenuItem.vue'
 
 interface MenuItem {
   id: string
   label: string
-  icon: Component
+  icon: IconName  // ✅ IconName вместо Component
   badge?: string | number
 }
 

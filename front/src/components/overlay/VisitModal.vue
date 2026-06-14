@@ -2,24 +2,19 @@
   <Transition name="fade">
     <div
       v-if="visible"
-      class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+      class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
       @click="$emit('close')"
     >
       <div
-        class="relative w-full max-w-lg overflow-hidden rounded-3xl bg-forest-900 shadow-2xl ring-1 ring-white/10 max-h-[90vh] overflow-y-auto"
+        class="bg-forest-900 relative max-h-[90vh] w-full max-w-lg overflow-hidden overflow-y-auto rounded-3xl shadow-2xl ring-1 ring-white/10"
         @click.stop
       >
         <!-- Close Button -->
         <button
-          class="absolute right-4 top-4 z-10 rounded-full bg-black/20 p-2 text-cream-100 transition hover:bg-black/40"
+          class="text-cream-100 absolute top-4 right-4 z-10 rounded-full bg-black/20 p-2 transition hover:bg-black/40"
           @click="$emit('close')"
         >
-          <svg
-            class="h-6 w-6"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
+          <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path
               stroke-linecap="round"
               stroke-linejoin="round"
@@ -30,29 +25,22 @@
         </button>
 
         <!-- Header -->
-        <div class="border-b border-white/10 bg-accent/10 p-8 pb-6">
-          <h3 class="text-2xl font-bold text-cream-100">
-            Оформление билета
-          </h3>
-          <p class="mt-2 text-sm text-cream-100/60">
-            Выберите дату, время и количество гостей
-          </p>
+        <div class="bg-accent/10 border-b border-white/10 p-8 pb-6">
+          <h3 class="text-cream-100 text-2xl font-bold">Оформление билета</h3>
+          <p class="text-cream-100/60 mt-2 text-sm">Выберите дату, время и количество гостей</p>
         </div>
 
         <!-- Body -->
         <div class="space-y-6 p-8">
-
           <!-- Date Picker Trigger -->
           <div>
-            <label class="mb-2 block text-sm font-medium text-cream-100/80">
-              Дата посещения
-            </label>
+            <label class="text-cream-100/80 mb-2 block text-sm font-medium"> Дата посещения </label>
             <div
-              class="flex cursor-pointer items-center gap-3 rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-cream-100 transition hover:border-accent/30"
+              class="text-cream-100 hover:border-accent/30 flex cursor-pointer items-center gap-3 rounded-xl border border-white/10 bg-white/5 px-4 py-3 transition"
               @click="showDatePicker = true"
             >
               <svg
-                class="h-5 w-5 shrink-0 text-accent"
+                class="text-accent h-5 w-5 shrink-0"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -66,7 +54,7 @@
               </svg>
               <span class="flex-1">{{ formattedDate }}</span>
               <svg
-                class="h-4 w-4 text-cream-100/40"
+                class="text-cream-100/40 h-4 w-4"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -83,7 +71,7 @@
 
           <!-- Time Slots -->
           <div>
-            <label class="mb-2 block text-sm font-medium text-cream-100/80">
+            <label class="text-cream-100/80 mb-2 block text-sm font-medium">
               Время посещения
             </label>
             <div class="grid grid-cols-3 gap-2">
@@ -94,7 +82,7 @@
                 :class="
                   selectedTime === slot.value
                     ? 'border-accent bg-accent/20 text-accent'
-                    : 'border-white/10 bg-white/5 text-cream-100/60 hover:border-white/20 hover:text-cream-100'
+                    : 'text-cream-100/60 hover:text-cream-100 border-white/10 bg-white/5 hover:border-white/20'
                 "
                 @click="selectedTime = slot.value"
               >
@@ -105,13 +93,13 @@
 
           <!-- Selected Tickets List -->
           <div>
-            <label class="mb-2 block text-sm font-medium text-cream-100/80">
+            <label class="text-cream-100/80 mb-2 block text-sm font-medium">
               Выбранные билеты
             </label>
 
             <div
               v-if="selectedTickets.length === 0"
-              class="rounded-xl border border-dashed border-white/10 bg-white/5 p-6 text-center text-cream-100/40"
+              class="text-cream-100/40 rounded-xl border border-dashed border-white/10 bg-white/5 p-6 text-center"
             >
               Нажмите «Добавить тип билета», чтобы начать
             </div>
@@ -123,22 +111,22 @@
                 class="flex items-center justify-between rounded-xl border border-white/10 bg-white/5 p-4"
               >
                 <div class="flex-1">
-                  <span class="font-medium text-cream-100">{{ item.ticket.name }}</span>
-                  <span class="ml-2 text-sm text-cream-100/60">{{ item.ticket.price }} ₽</span>
+                  <span class="text-cream-100 font-medium">{{ item.ticket.name }}</span>
+                  <span class="text-cream-100/60 ml-2 text-sm">{{ item.ticket.price }} ₽</span>
                 </div>
 
                 <div class="flex items-center gap-3">
                   <button
-                    class="flex h-8 w-8 items-center justify-center rounded-full bg-white/5 text-cream-100 transition hover:bg-white/10"
+                    class="text-cream-100 flex h-8 w-8 items-center justify-center rounded-full bg-white/5 transition hover:bg-white/10"
                     @click="item.count > 1 ? item.count-- : removeTicket(index)"
                   >
                     {{ item.count > 1 ? '−' : '×' }}
                   </button>
 
-                  <span class="w-8 text-center font-bold text-cream-100">{{ item.count }}</span>
+                  <span class="text-cream-100 w-8 text-center font-bold">{{ item.count }}</span>
 
                   <button
-                    class="flex h-8 w-8 items-center justify-center rounded-full bg-white/5 text-cream-100 transition hover:bg-white/10"
+                    class="text-cream-100 flex h-8 w-8 items-center justify-center rounded-full bg-white/5 transition hover:bg-white/10"
                     @click="item.count++"
                   >
                     +
@@ -150,15 +138,10 @@
 
           <!-- Add Ticket Type Button -->
           <button
-            class="flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-accent/30 bg-accent/5 py-3 text-accent transition hover:bg-accent/10"
+            class="border-accent/30 bg-accent/5 text-accent hover:bg-accent/10 flex w-full items-center justify-center gap-2 rounded-xl border border-dashed py-3 transition"
             @click="showTypeSelector = true"
           >
-            <svg
-              class="h-5 w-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
+            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
                 stroke-linecap="round"
                 stroke-linejoin="round"
@@ -172,19 +155,19 @@
           <!-- Total -->
           <div class="flex items-center justify-between border-t border-white/10 pt-4">
             <span class="text-cream-100/60">Итого к оплате:</span>
-            <span class="text-3xl font-bold text-accent">{{ totalPrice }} ₽</span>
+            <span class="text-accent text-3xl font-bold">{{ totalPrice }} ₽</span>
           </div>
 
           <!-- Submit Button -->
           <button
-            class="btn btn-accent w-full rounded-xl py-4 text-lg font-bold disabled:opacity-50 disabled:cursor-not-allowed"
+            class="btn btn-accent w-full rounded-xl py-4 text-lg font-bold disabled:cursor-not-allowed disabled:opacity-50"
             :disabled="selectedTickets.length === 0 || !selectedTime || !selectedDate"
             @click="handlePurchase"
           >
             Перейти к оплате
           </button>
 
-          <p class="text-center text-xs text-cream-100/30">
+          <p class="text-cream-100/30 text-center text-xs">
             Нажимая кнопку, вы соглашаетесь с правилами посещения парка
           </p>
         </div>
@@ -196,32 +179,42 @@
   <Transition name="fade">
     <div
       v-if="showDatePicker"
-      class="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
+      class="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm"
       @click="showDatePicker = false"
     >
       <div
-        class="relative w-full max-w-sm overflow-hidden rounded-3xl bg-forest-900 shadow-2xl ring-1 ring-white/10"
+        class="bg-forest-900 relative w-full max-w-sm overflow-hidden rounded-3xl shadow-2xl ring-1 ring-white/10"
         @click.stop
       >
         <!-- Month Navigation -->
         <div class="flex items-center justify-between border-b border-white/10 p-6">
           <button
-            class="rounded-full p-2 text-cream-100/60 transition hover:bg-white/10 hover:text-cream-100"
+            class="text-cream-100/60 hover:text-cream-100 rounded-full p-2 transition hover:bg-white/10"
             @click="prevMonth"
           >
             <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M15 19l-7-7 7-7"
+              />
             </svg>
           </button>
-          <span class="text-lg font-bold text-cream-100 capitalize">
+          <span class="text-cream-100 text-lg font-bold capitalize">
             {{ currentMonthName }} {{ currentYear }}
           </span>
           <button
-            class="rounded-full p-2 text-cream-100/60 transition hover:bg-white/10 hover:text-cream-100"
+            class="text-cream-100/60 hover:text-cream-100 rounded-full p-2 transition hover:bg-white/10"
             @click="nextMonth"
           >
             <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M9 5l7 7-7 7"
+              />
             </svg>
           </button>
         </div>
@@ -231,7 +224,7 @@
           <div
             v-for="day in weekDays"
             :key="day"
-            class="py-2 text-center text-xs font-medium text-cream-100/40"
+            class="text-cream-100/40 py-2 text-center text-xs font-medium"
           >
             {{ day }}
           </div>
@@ -239,11 +232,7 @@
 
         <!-- Calendar Days -->
         <div class="grid grid-cols-7 gap-1 p-6 pt-2">
-          <div
-            v-for="n in leadingEmptyDays"
-            :key="'empty-' + n"
-            class="aspect-square"
-          />
+          <div v-for="n in leadingEmptyDays" :key="'empty-' + n" class="aspect-square" />
           <button
             v-for="day in daysInMonth"
             :key="day"
@@ -259,7 +248,7 @@
         <!-- Today Button -->
         <div class="border-t border-white/10 p-6">
           <button
-            class="w-full rounded-xl bg-accent/10 py-3 text-accent transition hover:bg-accent/20"
+            class="bg-accent/10 text-accent hover:bg-accent/20 w-full rounded-xl py-3 transition"
             @click="selectToday"
           >
             Сегодня
@@ -273,26 +262,26 @@
   <Transition name="fade">
     <div
       v-if="showTypeSelector"
-      class="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
+      class="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm"
       @click="showTypeSelector = false"
     >
       <div
-        class="relative w-full max-w-md overflow-hidden rounded-3xl bg-forest-900 shadow-2xl ring-1 ring-white/10"
+        class="bg-forest-900 relative w-full max-w-md overflow-hidden rounded-3xl shadow-2xl ring-1 ring-white/10"
         @click.stop
       >
         <div class="border-b border-white/10 p-6">
-          <h3 class="text-xl font-bold text-cream-100">Выберите тип билета</h3>
+          <h3 class="text-cream-100 text-xl font-bold">Выберите тип билета</h3>
         </div>
         <div class="max-h-96 overflow-y-auto p-6">
           <div class="space-y-3">
             <button
               v-for="ticket in availableTickets"
               :key="ticket.name"
-              class="w-full rounded-xl border border-white/10 bg-white/5 p-4 text-left transition hover:bg-white/10 hover:border-accent/30"
+              class="hover:border-accent/30 w-full rounded-xl border border-white/10 bg-white/5 p-4 text-left transition hover:bg-white/10"
               @click="addTicket(ticket)"
             >
               <div class="flex items-center justify-between">
-                <span class="font-medium text-cream-100">{{ ticket.name }}</span>
+                <span class="text-cream-100 font-medium">{{ ticket.name }}</span>
                 <span class="text-accent font-bold">{{ ticket.price }} ₽</span>
               </div>
             </button>
@@ -300,7 +289,7 @@
         </div>
         <div class="border-t border-white/10 p-6">
           <button
-            class="w-full rounded-xl bg-white/10 py-3 text-cream-100 transition hover:bg-white/20"
+            class="text-cream-100 w-full rounded-xl bg-white/10 py-3 transition hover:bg-white/20"
             @click="showTypeSelector = false"
           >
             Отмена
@@ -312,16 +301,8 @@
 </template>
 
 <script setup lang="ts">
-import {
-  computed,
-  onMounted,
-  onUnmounted,
-  ref,
-  watch
-} from 'vue'
-import { Ticket,SelectedTicket } from "@/types/ticket";
-
-
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
+import { Ticket, SelectedTicket } from '@/types/ticket'
 
 const props = defineProps<{
   visible: boolean
@@ -340,7 +321,7 @@ const defaultTickets: Ticket[] = [
   { name: 'Взрослый', price: 890 },
   { name: 'Детский', price: 490 },
   { name: 'Пенсионный', price: 450 },
-  { name: 'Семейный', price: 2100 }
+  { name: 'Семейный', price: 2100 },
 ]
 
 const tickets = computed(() => props.tickets ?? defaultTickets)
@@ -361,7 +342,7 @@ watch(
     if (isVisible) {
       // Reset basic state
       selectedTime.value = ''
-      
+
       // Set Date
       if (props.defaultDate) {
         const d = new Date(props.defaultDate)
@@ -378,7 +359,7 @@ watch(
       if (props.preselectedTicket) {
         selectedTickets.value.push({
           ticket: props.preselectedTicket,
-          count: 1
+          count: 1,
         })
       }
     }
@@ -398,7 +379,7 @@ const timeSlots = [
   { label: '17:00', value: '17:00' },
   { label: '18:00', value: '18:00' },
   { label: '19:00', value: '19:00' },
-  { label: '20:00', value: '20:00' }
+  { label: '20:00', value: '20:00' },
 ]
 
 // Calendar helpers
@@ -484,14 +465,14 @@ const formattedDate = computed(() => {
     weekday: 'long',
     day: 'numeric',
     month: 'long',
-    year: 'numeric'
+    year: 'numeric',
   })
 })
 
 // Available tickets (excluding already selected types to avoid duplicates in selector)
 const availableTickets = computed(() => {
-  const selectedNames = selectedTickets.value.map(item => item.ticket.name)
-  return tickets.value.filter(ticket => !selectedNames.includes(ticket.name))
+  const selectedNames = selectedTickets.value.map((item) => item.ticket.name)
+  return tickets.value.filter((ticket) => !selectedNames.includes(ticket.name))
 })
 
 // Total price
@@ -519,7 +500,7 @@ function handlePurchase() {
   emit('purchase', {
     tickets: selectedTickets.value,
     date: selectedDate.value.toISOString().split('T')[0],
-    time: selectedTime.value
+    time: selectedTime.value,
   })
 }
 
