@@ -6,7 +6,7 @@
     <!-- FAB-кнопка: справа, чуть выше центра -->
     <div
       v-if="isAdmin"
-      class="group absolute right-4 top-1/2 z-20 -translate-y-[60%]"
+      class="group absolute right-4 bottom-1/6 z-20 translate-y-[80%]"
       @mouseenter="isHovered = true"
       @mouseleave="isHovered = false"
     >
@@ -36,7 +36,7 @@
               opacity: isHovered ? 1 : 0,
               transform: isHovered ? 'translateY(0) scale(1)' : 'translateY(20px) scale(0.5)'
             }"
-            @click.stop="action.onClick"
+            @click.stop="handleAction(action)"
           >
             <!-- Font Awesome иконка -->
             <i v-if="action.icon?.includes('fa-')" :class="action.icon" class="text-sm"></i>
@@ -50,7 +50,10 @@
 
       <!-- Главная кнопка -->
       <button
-        class="relative flex h-12 w-12 items-center justify-center rounded-full border border-white/15 bg-black/60 text-white shadow-xl backdrop-blur-md transition-all duration-300 hover:scale-110 hover:bg-forest-300/80 hover:border-lime/40 hover:shadow-[0_0_20px_rgba(168,201,107,0.3)]"
+        class="relative flex h-12 w-12 items-center justify-center  border rounded-2xl
+        border-transparent bg-black/5 text-white shadow-xl backdrop-blur-md transition-all duration-300 hover:scale-110 hover:bg-forest-300/80 hover:border-lime/40 hover:shadow-[0_0_20px_rgba(168,201,107,0.3)]
+        hover:rounded-full 
+        "
         :title="editLabel"
         @click.stop="handleEdit"
       >
@@ -92,5 +95,9 @@ const isHovered = ref(false)
 
 const handleEdit = () => {
   emit('edit')
+}
+
+const handleAction = (action: Action) => {
+  action.onClick()
 }
 </script>

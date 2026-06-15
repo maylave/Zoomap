@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '../views/HomeView.vue'
 import NotFound from "@/views/404.vue";
+import form from '@/views/form.vue';
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
@@ -13,6 +14,11 @@ const router = createRouter({
        path: '/404',
       name: 'NotFound',
       component: NotFound,
+    },
+    {
+       path: '/login',
+      name: 'form',
+      component: form,
     },
     {
       path: '/about',
