@@ -23,6 +23,7 @@
         <button
           class="text-cream-100/40 hover:text-accent transition-colors duration-smooth p-2 rounded-lg hover:bg-white/5"
           title="Редактировать секцию"
+          @click="openSectionEditModal"
         >
           <i class="fa-solid fa-pen text-sm"></i>
         </button>
@@ -30,7 +31,7 @@
 
       <!-- Панель удаления (когда выбраны билеты) -->
       <div
-        v-if="isDeleteMode && selectedTickets.length > 0"
+        v-if="isDeleteMode && (selectedTickets.length > 0 || selectedHours.length > 0)"
         class="mb-10 flex items-center justify-between rounded-2xl border border-terracotta/30 bg-terracotta/10 p-4 backdrop-blur-sm animate-fade-in lg:col-span-2"
       >
         <div class="flex items-center gap-4">
@@ -39,10 +40,10 @@
           </div>
           <div>
             <p class="text-cream-100 text-sm font-medium">
-              Выбрано билетов: {{ selectedTickets.length }}
+              Выбрано: {{ selectedTickets.length + selectedHours.length }} элементов
             </p>
             <p class="text-cream-100/60 text-xs mt-0.5">
-              Нажмите "Удалить" для подтверждения
+              Билетов: {{ selectedTickets.length }}, Времени работы: {{ selectedHours.length }}
             </p>
           </div>
         </div>
@@ -66,15 +67,15 @@
       <!-- Левая колонка -->
       <div>
         <span class="inline-flex rounded-full border border-accent/20 bg-accent/10 px-4 py-2 text-sm font-medium text-accent">
-          Планируйте визит
+          {{ sectionBadge }}
         </span>
 
         <h2 class="mt-6 text-4xl font-bold text-cream-100 md:text-5xl">
-          Время и цены
+          {{ sectionTitle }}
         </h2>
 
         <p class="mt-6 max-w-xl leading-8 text-cream-100/60">
-          ZooVerse работает 365 дней в году. Мы верим, что общение с природой должно быть доступным для каждого.
+          {{ sectionDescription }}
         </p>
 
         <!-- Кнопка открывает общую модалку (без предвыбора) -->
@@ -93,8 +94,9 @@
             :key="item.day"
             class="group/hour relative rounded-2xl border border-white/10 bg-white/5 p-5 transition hover:bg-white/10"
             :class="{ 'ring-2 ring-terracotta ring-offset-2 ring-offset-forest-400': selectedHours.includes(index) }"
+            @click="isDeleteMode ? toggleHourSelection(index) : null"
           >
-            <!-- Чекбокс для удаления (только в режиме удаления) -->
+            <!-- Чекбокс для удаления -->
             <div
               v-if="isDeleteMode"
               class="absolute right-3 top-3 z-10 flex h-7 w-7 items-center justify-center rounded-lg border-2 bg-black/40 backdrop-blur-md transition-all duration-200"
@@ -109,18 +111,29 @@
               ></i>
             </div>
 
-            <p class="mb-2 text-xs font-medium uppercase tracking-wider text-accent">
+            <!-- Кнопка редактирования -->
+            <button
+              v-if="isAdmin && !isDeleteMode"
+              class="absolute right-3 top-3 z-10 flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-black/30 text-cream-100/50 backdrop-blur-md opacity-0 group-hover/hour:opacity-100 transition-all duration-200 hover:bg-accent/20 hover:text-accent hover:border-accent/40 hover:scale-110"
+              title="Редактировать время работы"
+              @click.stop="openHourEditModal(index)"
+            >
+              <i class="fa-solid fa-pen-to-square text-xs"></i>
+            </button>
+
+            <p class="mb-2 text-xs font-medium uppercase tracking-wider text-accent" :class="{ 'pr-10': isDeleteMode || (isAdmin && !isDeleteMode) }">
               {{ item.day }}
             </p>
-            <p class="text-2xl font-bold text-cream-100" :class="{ 'pr-10': isDeleteMode }">
+            <p class="text-2xl font-bold text-cream-100" :class="{ 'pr-10': isDeleteMode || (isAdmin && !isDeleteMode) }">
               {{ item.time }}
             </p>
           </div>
 
-          <!-- Добавить время работы (только для админа и не в режиме удаления) -->
+          <!-- Добавить время работы -->
           <div
             v-if="isAdmin && !isDeleteMode"
             class="group/add flex min-h-[100px] cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-white/20 bg-white/[0.02] backdrop-blur-sm transition-all duration-300 hover:border-accent/50 hover:bg-accent/5"
+            @click="openNewHourModal"
           >
             <i class="fa-solid fa-plus text-2xl text-cream-100/40 transition-colors duration-300 group-hover/add:text-accent"></i>
             <p class="text-cream-100/60 text-xs">Добавить</p>
@@ -137,14 +150,14 @@
         <div
           v-for="(ticket, index) in tickets"
           :key="ticket.name"
-          class="relative flex items-center justify-between border-b border-white/10 py-4 last:border-0 transition-colors group"
+          class="relative flex items-center justify-between border-b border-white/10 py-4 last:border-0 transition-colors group/ticket"
           :class="[
             isDeleteMode ? 'cursor-pointer' : 'cursor-pointer hover:bg-white/5 px-2 -mx-2 rounded-lg',
             { 'ring-2 ring-terracotta ring-offset-2 ring-offset-accent/10 rounded-lg px-2 -mx-2': selectedTickets.includes(index) }
           ]"
           @click="isDeleteMode ? toggleTicketSelection(index) : openModal(ticket)"
         >
-          <!-- Чекбокс для удаления (только в режиме удаления) -->
+          <!-- Чекбокс для удаления -->
           <div
             v-if="isDeleteMode"
             class="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-12 flex h-8 w-8 items-center justify-center rounded-lg border-2 bg-black/40 backdrop-blur-md transition-all duration-200"
@@ -158,8 +171,18 @@
             ></i>
           </div>
 
-          <div :class="{ 'pl-4': isDeleteMode }">
-            <p class="font-medium text-cream-100/80 group-hover:text-cream-100 transition-colors">
+          <!-- Кнопка редактирования -->
+          <button
+            v-if="isAdmin && !isDeleteMode"
+            class="absolute right-0 top-1/2 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-black/30 text-cream-100/50 backdrop-blur-md opacity-0 group-hover/ticket:opacity-100 transition-all duration-200 hover:bg-accent/20 hover:text-accent hover:border-accent/40 hover:scale-110"
+            title="Редактировать билет"
+            @click.stop="openTicketEditModal(index)"
+          >
+            <i class="fa-solid fa-pen-to-square text-xs"></i>
+          </button>
+
+          <div :class="{ 'pl-4': isDeleteMode, 'pr-10': isAdmin && !isDeleteMode }">
+            <p class="font-medium text-cream-100/80 group-hover/ticket:text-cream-100 transition-colors">
               {{ ticket.name }}
             </p>
             <p class="mt-1 text-sm text-cream-100/40">
@@ -172,10 +195,11 @@
           </span>
         </div>
 
-        <!-- Добавить билет (только для админа и не в режиме удаления) -->
+        <!-- Добавить билет -->
         <div
           v-if="isAdmin && !isDeleteMode"
           class="group/add mt-6 flex cursor-pointer items-center justify-center gap-3 rounded-2xl border-2 border-dashed border-white/20 bg-white/[0.02] p-4 backdrop-blur-sm transition-all duration-300 hover:border-accent/50 hover:bg-accent/5"
+          @click="openNewTicketModal"
         >
           <i class="fa-solid fa-plus text-xl text-cream-100/40 transition-colors duration-300 group-hover/add:text-accent"></i>
           <p class="text-cream-100/60 text-sm font-medium">Добавить тип билета</p>
@@ -183,7 +207,7 @@
       </div>
     </div>
 
-    <!-- Modal Component -->
+    <!-- Modal Component для покупки -->
     <VisitModal
       v-if="!isDeleteMode"
       :visible="isModalVisible"
@@ -193,17 +217,53 @@
       @close="closeModal"
       @purchase="handlePurchase"
     />
+
+    <!-- EditModal для секции -->
+    <EditModal
+      :visible="isSectionEditModalOpen"
+      title="Редактирование секции"
+      subtitle="Измените заголовок и описание секции"
+      :fields="sectionEditFields"
+      @close="closeSectionEditModal"
+      @save="handleSectionEditSave"
+    />
+
+    <!-- EditModal для билета -->
+    <EditModal
+      :visible="isTicketEditModalOpen"
+      :title="ticketEditModalTitle"
+      :subtitle="ticketEditModalSubtitle"
+      :fields="ticketEditFields"
+      @close="closeTicketEditModal"
+      @save="handleTicketEditSave"
+    />
+
+    <!-- EditModal для времени работы -->
+    <EditModal
+      :visible="isHourEditModalOpen"
+      :title="hourEditModalTitle"
+      :subtitle="hourEditModalSubtitle"
+      :fields="hourEditFields"
+      @close="closeHourEditModal"
+      @save="handleHourEditSave"
+    />
   </section>
 </template>
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import VisitModal from '../overlay/VisitModal.vue'
+import EditModal from '@/components/overlay/EditModal.vue'
 
 interface Ticket {
   name: string
   description: string
   price: number
+}
+
+interface Hour {
+  day: string
+  time: string
 }
 
 // Флаг администратора
@@ -217,12 +277,34 @@ const selectedHours = ref<number[]>([])
 const isModalVisible = ref(false)
 const selectedTicket = ref<Ticket | null>(null)
 
+// Редактируемые тексты секции
+const sectionBadge = ref('Планируйте визит')
+const sectionTitle = ref('Время и цены')
+const sectionDescription = ref('ZooVerse работает 365 дней в году. Мы верим, что общение с природой должно быть доступным для каждого.')
+
+// Состояние для модалки редактирования секции
+const isSectionEditModalOpen = ref(false)
+
+// Состояние для модалки редактирования билета
+const isTicketEditModalOpen = ref(false)
+const ticketEditModalTitle = ref('Редактирование билета')
+const ticketEditModalSubtitle = ref('Измените данные билета')
+const editingTicketIndex = ref<number | null>(null)
+const isNewTicket = ref(false)
+
+// Состояние для модалки редактирования времени работы
+const isHourEditModalOpen = ref(false)
+const hourEditModalTitle = ref('Редактирование времени работы')
+const hourEditModalSubtitle = ref('Измените расписание')
+const editingHourIndex = ref<number | null>(null)
+const isNewHour = ref(false)
+
 // Получаем сегодняшнюю дату в формате YYYY-MM-DD
 const todayDate = computed(() => {
   return new Date().toISOString().split('T')[0]
 })
 
-const hours = ref([
+const hours = ref<Hour[]>([
   { day: 'Пн – Пт', time: '9:00 – 19:00' },
   { day: 'Сб – Вс', time: '8:00 – 21:00' },
   { day: 'Праздники', time: '9:00 – 20:00' },
@@ -237,15 +319,109 @@ const tickets = ref<Ticket[]>([
   { name: 'Годовой абонемент', description: 'Неограниченное посещение', price: 3900 }
 ])
 
+// Поля для редактирования секции
+const sectionEditFields = computed(() => [
+  {
+    key: 'sectionBadge',
+    label: 'Бейдж секции',
+    value: sectionBadge.value,
+    placeholder: 'Например: Планируйте визит',
+    hint: 'Маленький текст над заголовком',
+    icon: 'fa-solid fa-tag',
+    type: 'text' as const,
+  },
+  {
+    key: 'sectionTitle',
+    label: 'Заголовок',
+    value: sectionTitle.value,
+    placeholder: 'Например: Время и цены',
+    required: true,
+    icon: 'fa-solid fa-heading',
+    type: 'text' as const,
+  },
+  {
+    key: 'sectionDescription',
+    label: 'Описание',
+    value: sectionDescription.value,
+    placeholder: 'Описание секции',
+    rows: 3,
+    icon: 'fa-solid fa-align-left',
+    type: 'textarea' as const,
+  },
+])
+
+// Поля для редактирования билета
+const ticketEditFields = computed(() => {
+  const ticket = editingTicketIndex.value !== null ? tickets.value[editingTicketIndex.value] : null
+  
+  return [
+    {
+      key: 'name',
+      label: 'Название билета',
+      value: ticket?.name || '',
+      placeholder: 'Например: Взрослый',
+      required: true,
+      icon: 'fa-solid fa-ticket',
+      type: 'text' as const,
+    },
+    {
+      key: 'description',
+      label: 'Описание',
+      value: ticket?.description || '',
+      placeholder: 'Например: 18–64 года',
+      required: true,
+      icon: 'fa-solid fa-align-left',
+      type: 'text' as const,
+    },
+    {
+      key: 'price',
+      label: 'Цена (₽)',
+      value: ticket?.price || 0,
+      placeholder: 'Например: 890',
+      required: true,
+      hint: 'Укажите цену в рублях',
+      icon: 'fa-solid fa-ruble-sign',
+      type: 'number' as const,
+    },
+  ]
+})
+
+// Поля для редактирования времени работы
+const hourEditFields = computed(() => {
+  const hour = editingHourIndex.value !== null ? hours.value[editingHourIndex.value] : null
+  
+  return [
+    {
+      key: 'day',
+      label: 'Дни недели',
+      value: hour?.day || '',
+      placeholder: 'Например: Пн – Пт',
+      required: true,
+      icon: 'fa-solid fa-calendar',
+      type: 'text' as const,
+    },
+    {
+      key: 'time',
+      label: 'Время работы',
+      value: hour?.time || '',
+      placeholder: 'Например: 9:00 – 19:00',
+      required: true,
+      hint: 'Формат: ЧЧ:ММ – ЧЧ:ММ',
+      icon: 'fa-solid fa-clock',
+      type: 'text' as const,
+    },
+  ]
+})
+
 // Открытие общей модалки (пустой)
 const openGeneralModal = () => {
-  selectedTicket.value = null // Сбрасываем предвыбор
+  selectedTicket.value = null
   isModalVisible.value = true
 }
 
 // Открытие модалки с конкретным билетом
 const openModal = (ticket: Ticket) => {
-  selectedTicket.value = ticket // Устанавливаем предвыбор
+  selectedTicket.value = ticket
   isModalVisible.value = true
 }
 
@@ -256,11 +432,10 @@ const closeModal = () => {
 // Обработка покупки из модалки
 const handlePurchase = (data: { tickets: any[]; date: string; time: string }) => {
   console.log('Покупка:', data)
-  // Здесь логика отправки на бэкенд или перехода к оплате
   closeModal()
 }
 
-// Переключение режима удаления
+// Режим удаления
 const enableDeleteMode = () => {
   isDeleteMode.value = true
   selectedTickets.value = []
@@ -273,7 +448,6 @@ const cancelDeleteMode = () => {
   selectedHours.value = []
 }
 
-// Переключение выбора билета
 const toggleTicketSelection = (index: number) => {
   const idx = selectedTickets.value.indexOf(index)
   if (idx > -1) {
@@ -283,7 +457,6 @@ const toggleTicketSelection = (index: number) => {
   }
 }
 
-// Переключение выбора времени работы
 const toggleHourSelection = (index: number) => {
   const idx = selectedHours.value.indexOf(index)
   if (idx > -1) {
@@ -293,18 +466,132 @@ const toggleHourSelection = (index: number) => {
   }
 }
 
-// Подтверждение удаления
 const confirmDelete = () => {
-  // Здесь будет логика удаления
-  console.log('Удалить билеты:', selectedTickets.value)
-  console.log('Удалить время работы:', selectedHours.value)
-  // После удаления очищаем
+  // Удаляем билеты (с конца, чтобы индексы не сбились)
+  const sortedTicketIndexes = [...selectedTickets.value].sort((a, b) => b - a)
+  sortedTicketIndexes.forEach(idx => {
+    tickets.value.splice(idx, 1)
+  })
+  
+  // Удаляем время работы
+  const sortedHourIndexes = [...selectedHours.value].sort((a, b) => b - a)
+  sortedHourIndexes.forEach(idx => {
+    hours.value.splice(idx, 1)
+  })
+  
+  console.log('Удалено билетов:', sortedTicketIndexes)
+  console.log('Удалено времени работы:', sortedHourIndexes)
+  
   selectedTickets.value = []
   selectedHours.value = []
   isDeleteMode.value = false
 }
 
-// Эмитим состояние для родительского компонента
+// === EditModal: Секция ===
+const openSectionEditModal = () => {
+  isSectionEditModalOpen.value = true
+}
+
+const closeSectionEditModal = () => {
+  isSectionEditModalOpen.value = false
+}
+
+const handleSectionEditSave = (values: Record<string, any>) => {
+  if (values.sectionBadge !== undefined) sectionBadge.value = values.sectionBadge
+  if (values.sectionTitle !== undefined) sectionTitle.value = values.sectionTitle
+  if (values.sectionDescription !== undefined) sectionDescription.value = values.sectionDescription
+  console.log('Сохранены изменения секции:', values)
+}
+
+// === EditModal: Билет ===
+const openTicketEditModal = (index: number) => {
+  editingTicketIndex.value = index
+  isNewTicket.value = false
+  ticketEditModalTitle.value = 'Редактирование билета'
+  ticketEditModalSubtitle.value = `Редактирование: ${tickets.value[index].name}`
+  isTicketEditModalOpen.value = true
+}
+
+const openNewTicketModal = () => {
+  editingTicketIndex.value = null
+  isNewTicket.value = true
+  ticketEditModalTitle.value = 'Добавить новый билет'
+  ticketEditModalSubtitle.value = 'Заполните данные нового типа билета'
+  isTicketEditModalOpen.value = true
+}
+
+const closeTicketEditModal = () => {
+  isTicketEditModalOpen.value = false
+  editingTicketIndex.value = null
+  isNewTicket.value = false
+}
+
+const handleTicketEditSave = (values: Record<string, any>) => {
+  if (isNewTicket.value) {
+    // Добавление нового билета
+    const newTicket: Ticket = {
+      name: values.name,
+      description: values.description,
+      price: Number(values.price),
+    }
+    tickets.value.push(newTicket)
+    console.log('Добавлен новый билет:', newTicket)
+  } else if (editingTicketIndex.value !== null) {
+    // Обновление существующего билета
+    const ticket = tickets.value[editingTicketIndex.value]
+    if (ticket) {
+      ticket.name = values.name
+      ticket.description = values.description
+      ticket.price = Number(values.price)
+      console.log('Обновлён билет:', ticket)
+    }
+  }
+}
+
+// === EditModal: Время работы ===
+const openHourEditModal = (index: number) => {
+  editingHourIndex.value = index
+  isNewHour.value = false
+  hourEditModalTitle.value = 'Редактирование времени работы'
+  hourEditModalSubtitle.value = `Редактирование: ${hours.value[index].day}`
+  isHourEditModalOpen.value = true
+}
+
+const openNewHourModal = () => {
+  editingHourIndex.value = null
+  isNewHour.value = true
+  hourEditModalTitle.value = 'Добавить время работы'
+  hourEditModalSubtitle.value = 'Заполните расписание'
+  isHourEditModalOpen.value = true
+}
+
+const closeHourEditModal = () => {
+  isHourEditModalOpen.value = false
+  editingHourIndex.value = null
+  isNewHour.value = false
+}
+
+const handleHourEditSave = (values: Record<string, any>) => {
+  if (isNewHour.value) {
+    // Добавление нового времени работы
+    const newHour: Hour = {
+      day: values.day,
+      time: values.time,
+    }
+    hours.value.push(newHour)
+    console.log('Добавлено время работы:', newHour)
+  } else if (editingHourIndex.value !== null) {
+    // Обновление существующего времени работы
+    const hour = hours.value[editingHourIndex.value]
+    if (hour) {
+      hour.day = values.day
+      hour.time = values.time
+      console.log('Обновлено время работы:', hour)
+    }
+  }
+}
+
+// Expose для родительского компонента
 defineExpose({
   isDeleteMode,
   enableDeleteMode,

@@ -20,12 +20,23 @@
         </div>
       </div>
 
-      <button
-        class="text-cream-100/40 hover:text-accent transition-colors duration-smooth p-1.5 rounded-lg hover:bg-white/5"
-        title="Редактировать бегущую строку"
-      >
-        <i class="fa-solid fa-pen text-xs"></i>
-      </button>
+      <div class="flex items-center gap-2">
+        <button
+          class="text-cream-100/60 hover:text-accent transition-colors p-1.5 rounded-lg hover:bg-white/5 flex items-center gap-1.5 text-xs"
+          title="Добавить зону"
+          @click="openNewZoneModal"
+        >
+          <i class="fa-solid fa-plus text-xs"></i>
+          <span>Добавить</span>
+        </button>
+        <button
+          class="text-cream-100/40 hover:text-accent transition-colors duration-smooth p-1.5 rounded-lg hover:bg-white/5"
+          title="Редактировать все зоны"
+          @click="openAllZonesEditModal"
+        >
+          <i class="fa-solid fa-pen text-xs"></i>
+        </button>
+      </div>
     </div>
 
     <!-- Градиентные маски по краям для плавного исчезновения текста -->
@@ -50,14 +61,14 @@
                 <button
                   class="text-cream-100/60 hover:text-accent transition-colors p-1 rounded hover:bg-white/10"
                   title="Редактировать зону"
-                  @click.stop
+                  @click.stop="openZoneEditModal(index)"
                 >
                   <i class="fa-solid fa-pen text-xs"></i>
                 </button>
                 <button
                   class="text-cream-100/60 hover:text-error transition-colors p-1 rounded hover:bg-white/10"
                   title="Удалить зону"
-                  @click.stop
+                  @click.stop="deleteZone(index)"
                 >
                   <i class="fa-solid fa-trash text-xs"></i>
                 </button>
@@ -67,28 +78,152 @@
         </template>
       </div>
     </div>
+
+    <!-- EditModal для одной зоны -->
+    <EditModal
+      :visible="isZoneEditModalOpen"
+      :title="zoneEditModalTitle"
+      :subtitle="zoneEditModalSubtitle"
+      :fields="zoneEditFields"
+      @close="closeZoneEditModal"
+      @save="handleZoneEditSave"
+    />
+
+    <!-- EditModal для всех зон -->
+    <EditModal
+      :visible="isAllZonesEditModalOpen"
+      title="Редактирование всех зон"
+      subtitle="Измените названия всех зон зоопарка"
+      :fields="allZonesEditFields"
+      @close="closeAllZonesEditModal"
+      @save="handleAllZonesEditSave"
+    />
   </section>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
+import EditModal from '@/components/overlay/EditModal.vue'
 
-// Флаг администратора — в будущем можно получать из store или props
+// Флаг администратора
 const isAdmin = ref(true)
 
-// Правильное определение пропсов в Vue 3 + TS
-const props = withDefaults(defineProps<{
-  zones?: string[]
-}>(), {
-  zones: () => [
-    'Африканская саванна',
-    'Тропический лес',
-    'Арктическая зона',
-    'Океанариум',
-    'Детский зоопарк',
-    'Ночное сафари'
+// Состояние зон
+const zones = ref<string[]>([
+  'Африканская саванна',
+  'Тропический лес',
+  'Арктическая зона',
+  'Океанариум',
+  'Детский зоопарк',
+  'Ночное сафари'
+])
+
+// Состояние для модалки редактирования одной зоны
+const isZoneEditModalOpen = ref(false)
+const zoneEditModalTitle = ref('Редактирование зоны')
+const zoneEditModalSubtitle = ref('Измените название зоны')
+const editingZoneIndex = ref<number | null>(null)
+const isNewZone = ref(false)
+
+// Состояние для модалки редактирования всех зон
+const isAllZonesEditModalOpen = ref(false)
+
+// Поля для редактирования одной зоны
+const zoneEditFields = computed(() => {
+  const zoneName = editingZoneIndex.value !== null ? zones.value[editingZoneIndex.value] : ''
+  
+  return [
+    {
+      key: 'zoneName',
+      label: 'Название зоны',
+      value: zoneName,
+      placeholder: 'Например: Африканская саванна',
+      required: true,
+      hint: 'Это название будет отображаться в бегущей строке',
+      icon: 'fa-solid fa-map-marker-alt',
+      type: 'text' as const,
+    },
   ]
 })
+
+// Поля для редактирования всех зон
+const allZonesEditFields = computed(() => {
+  return zones.value.map((zone, index) => ({
+    key: `zone_${index}`,
+    label: `Зона ${index + 1}`,
+    value: zone,
+    placeholder: `Название зоны ${index + 1}`,
+    required: true,
+    icon: 'fa-solid fa-map-marker-alt',
+    type: 'text' as const,
+  }))
+})
+
+// === EditModal: Одна зона ===
+const openZoneEditModal = (index: number) => {
+  editingZoneIndex.value = index
+  isNewZone.value = false
+  zoneEditModalTitle.value = 'Редактирование зоны'
+  zoneEditModalSubtitle.value = `Редактирование: ${zones.value[index]}`
+  isZoneEditModalOpen.value = true
+}
+
+const openNewZoneModal = () => {
+  editingZoneIndex.value = null
+  isNewZone.value = true
+  zoneEditModalTitle.value = 'Добавить новую зону'
+  zoneEditModalSubtitle.value = 'Введите название новой зоны'
+  isZoneEditModalOpen.value = true
+}
+
+const closeZoneEditModal = () => {
+  isZoneEditModalOpen.value = false
+  editingZoneIndex.value = null
+  isNewZone.value = false
+}
+
+const handleZoneEditSave = (values: Record<string, any>) => {
+  if (isNewZone.value) {
+    // Добавление новой зоны
+    zones.value.push(values.zoneName)
+    console.log('Добавлена новая зона:', values.zoneName)
+  } else if (editingZoneIndex.value !== null) {
+    // Обновление существующей зоны
+    zones.value[editingZoneIndex.value] = values.zoneName
+    console.log('Обновлена зона:', values.zoneName)
+  }
+}
+
+// === EditModal: Все зоны ===
+const openAllZonesEditModal = () => {
+  isAllZonesEditModalOpen.value = true
+}
+
+const closeAllZonesEditModal = () => {
+  isAllZonesEditModalOpen.value = false
+}
+
+const handleAllZonesEditSave = (values: Record<string, any>) => {
+  // Обновляем все зоны
+  const newZones: string[] = []
+  for (let i = 0; i < zones.value.length; i++) {
+    const key = `zone_${i}`
+    if (values[key] !== undefined) {
+      newZones.push(values[key])
+    }
+  }
+  zones.value = newZones
+  console.log('Обновлены все зоны:', newZones)
+}
+
+// Удаление зоны
+const deleteZone = (index: number) => {
+  const zoneName = zones.value[index]
+  if (confirm(`Удалить зону "${zoneName}"?`)) {
+    zones.value.splice(index, 1)
+    console.log('Удалена зона:', zoneName)
+  }
+}
 </script>
 
 <style scoped>
