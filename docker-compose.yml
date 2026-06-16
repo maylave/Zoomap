@@ -8,11 +8,11 @@ services:
       POSTGRES_PASSWORD: zoomap_pass
       POSTGRES_DB: zoomap_db
     ports:
-      - '5432:5432'
+      - "5432:5432"
     volumes:
-      - pgdata:/var/lib/postgresql # <-- Монтируем на уровень выше!
+      - pgdata:/var/lib/postgresql
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U zoomap_user -d zoomap_db']
+      test: ["CMD-SHELL", "pg_isready -U zoomap_user -d zoomap_db"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -22,21 +22,23 @@ services:
     container_name: zoomap-backend
     restart: always
     ports:
-      - '3000:3000'
-      - '5555:5555'
+      - "3000:3000"
+      - "4983:4983"
     environment:
-      DATABASE_URL: 'postgresql://zoomap_user:zoomap_pass@postgres:5432/zoomap_db?schema=public'
+      DATABASE_URL: "postgresql://zoomap_user:zoomap_pass@postgres:5432/zoomap_db"
       NODE_ENV: development
+      CHOKIDAR_USEPOLLING: "true"
     depends_on:
       postgres:
         condition: service_healthy
     volumes:
-      # Монтируем ВСЮ папку back в /app
       - ./back:/app
-      # Но исключаем node_modules, чтобы использовать те, что внутри контейнера
-      - /app/node_modules
-      # Исключаем .git и другие служебные папки (опционально)
+      - backend_node_modules:/app/node_modules
       - /app/.git
+      - /app/.env
+    command: >
+      sh -c "npx drizzle-kit push && npx tsx watch src/index.ts"
 
 volumes:
   pgdata:
+  backend_node_modules:

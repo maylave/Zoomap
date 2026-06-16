@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Word Shuffler</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            width: 100%;
+            max-width: 500px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 24px;
+            font-size: 24px;
+        }
+
+        .input {
+            width: 100%;
+            padding: 14px 18px;
+            font-size: 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            outline: none;
+            transition: all 0.3s ease;
+            margin-bottom: 16px;
+        }
+
+        .input:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .btn {
+            width: 100%;
+            padding: 14px;
+            font-size: 16px;
+            font-weight: 600;
+            color: white;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 20px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .ouput {
+            padding: 16px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+            font-size: 16px;
+            color: #333;
+            min-height: 56px;
+            word-wrap: break-word;
+            font-family: 'Courier New', monospace;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>🔀 Перемешиватель слов</h1>
+        <input class="input" type="text" placeholder="Введите слово...">
+        <button class="btn">Перемешать</button>
+        <p class="ouput">Результат появится здесь...</p>
+    </div>
+
+    <script>
+        const input = document.querySelector('.input');
+        const output = document.querySelector('.ouput');
+        const button = document.querySelector('.btn');
+
+        function handleClick() {
+            const word = input.value;
+
+            if (!word) {
+                output.textContent = 'Введите слово!';
+                return;
+            }
+
+            const chars = word.split('');
+
+            // ИСПРАВЛЕНО: Math с большой буквы!
+            const length = Math.floor(Math.random() * 15);
+
+            for (let i = chars.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [chars[i], chars[j]] = [chars[j], chars[i]];
+            }
+
+            const characters = 'ABCDxyz0123456789_-';
+            let result = '';
+            const charactersLength = characters.length;
+
+            for (let i = 0; i < length; i++) {
+                const randomIndex = Math.floor(Math.random() * charactersLength);
+                result += characters.charAt(randomIndex);
+            }
+
+            output.textContent = chars.join('') + result;
+        }
+
+        button.addEventListener('click', handleClick);
+
+        input.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                handleClick();
+            }
+        });
+    </script>
+</body>
+
+</html>

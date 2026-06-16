@@ -1,7 +1,10 @@
-// back/src/db/schema.ts
-import { pgTable, serial, varchar } from 'drizzle-orm/pg-core'
+import { drizzle } from 'drizzle-orm/node-postgres';
+import { Pool } from 'pg';
+import * as schema from './schema.js';
 
-export const users = pgTable('users', {
-	id: serial('id').primaryKey(),
-	name: varchar('name', { length: 255 })
-})
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL!,
+});
+
+// Экспортируем db с типизацией схемы
+export const db = drizzle(pool, { schema });

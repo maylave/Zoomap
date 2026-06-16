@@ -9,4 +9,4 @@ RUN npm install
 COPY . .
 
 
-CMD ["npx", "ts-node", "--esm", "src/index.ts"]
+CMD ["npx", "ts-node", "--esm", "--watch", "src/index.ts"]
