@@ -1,0 +1,42 @@
+services:
+  postgres:
+    image: postgres:18-alpine
+    container_name: zoomap-db
+    restart: always
+    environment:
+      POSTGRES_USER: zoomap_user
+      POSTGRES_PASSWORD: zoomap_pass
+      POSTGRES_DB: zoomap_db
+    ports:
+      - '5432:5432'
+    volumes:
+      - pgdata:/var/lib/postgresql # <-- Монтируем на уровень выше!
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U zoomap_user -d zoomap_db']
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build: ./back
+    container_name: zoomap-backend
+    restart: always
+    ports:
+      - '3000:3000'
+      - '5555:5555'
+    environment:
+      DATABASE_URL: 'postgresql://zoomap_user:zoomap_pass@postgres:5432/zoomap_db?schema=public'
+      NODE_ENV: development
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      # Монтируем ВСЮ папку back в /app
+      - ./back:/app
+      # Но исключаем node_modules, чтобы использовать те, что внутри контейнера
+      - /app/node_modules
+      # Исключаем .git и другие служебные папки (опционально)
+      - /app/.git
+
+volumes:
+  pgdata:
