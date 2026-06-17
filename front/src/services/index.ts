@@ -1,0 +1,6 @@
+export { authService } from './auth.service'
+export { profileService } from './profile.service'
+export { animalsService } from './animals.service'
+export { eventsService } from './events.service'
+export { ticketsService } from './tickets.service'
+export { adminService } from './admin.service'

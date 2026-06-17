@@ -3,7 +3,7 @@
     
     <!-- Блок предупреждения (только для админа) -->
     <div
-      v-if="isAdmin"
+      v-if="authStore.isAdmin"
       class="group/warning mx-6 mb-4 flex items-center justify-between rounded-2xl border border-warning/30 bg-warning/10 p-3 backdrop-blur-sm transition-all hover:border-warning/50 hover:bg-warning/15"
     >
       <div class="flex items-center gap-3">
@@ -15,7 +15,7 @@
             Управление бегущей строкой
           </p>
           <p class="text-cream-100/60 text-[10px] mt-0.5">
-            Редактируйте зоны или добавьте новые
+            Редактируйте элементы или добавьте новые
           </p>
         </div>
       </div>
@@ -23,52 +23,67 @@
       <div class="flex items-center gap-2">
         <button
           class="text-cream-100/60 hover:text-accent transition-colors p-1.5 rounded-lg hover:bg-white/5 flex items-center gap-1.5 text-xs"
-          title="Добавить зону"
-          @click="openNewZoneModal"
+          title="Добавить элемент"
+          @click="openNewItemModal"
         >
           <i class="fa-solid fa-plus text-xs"></i>
           <span>Добавить</span>
         </button>
         <button
           class="text-cream-100/40 hover:text-accent transition-colors duration-smooth p-1.5 rounded-lg hover:bg-white/5"
-          title="Редактировать все зоны"
-          @click="openAllZonesEditModal"
+          title="Обновить"
+          @click="loadTickerItems"
         >
-          <i class="fa-solid fa-pen text-xs"></i>
+          <i class="fa-solid fa-rotate text-xs"></i>
         </button>
       </div>
     </div>
 
-    <!-- Градиентные маски по краям для плавного исчезновения текста -->
+    <!-- Градиентные маски по краям -->
     <div class="pointer-events-none absolute inset-y-0 left-0 z-10 w-24 bg-gradient-to-r from-forest-300/80 to-transparent" />
     <div class="pointer-events-none absolute inset-y-0 right-0 z-10 w-24 bg-gradient-to-l from-forest-300/80 to-transparent" />
 
-    <div class="marquee-wrap flex overflow-hidden">
+    <!-- Loading State -->
+    <div v-if="isLoading" class="flex items-center justify-center py-2">
+      <i class="fa-solid fa-circle-notch fa-spin text-forest-900/60 text-sm"></i>
+      <span class="ml-2 text-forest-900/60 text-xs">Загрузка...</span>
+    </div>
+
+    <!-- Бегущая строка -->
+    <div v-else-if="activeItems.length > 0" class="marquee-wrap flex overflow-hidden">
       <div class="marquee-track flex whitespace-nowrap">
         <!-- Дублируем контент дважды для бесшовной анимации -->
         <template v-for="n in 2" :key="n">
           <span 
-            v-for="(zone, index) in zones" 
-            :key="`${n}-${index}`"
+            v-for="item in activeItems" 
+            :key="`${n}-${item.id}`"
             class="group/zone relative flex items-center px-8 text-sm font-medium uppercase tracking-wider text-forest-900"
           >
-            {{ zone }}
+            <a 
+              v-if="item.link" 
+              :href="item.link" 
+              class="hover:text-accent transition-colors"
+              @click.stop
+            >
+              {{ item.text }}
+            </a>
+            <span v-else>{{ item.text }}</span>
             <span class="ml-8 opacity-60">✦</span>
             
-            <!-- Админские иконки (только для админа, появляются при hover) -->
-            <template v-if="isAdmin">
+            <!-- Админские иконки (только для админа) -->
+            <template v-if="authStore.isAdmin">
               <span class="ml-3 flex items-center gap-2 opacity-0 group-hover/zone:opacity-100 transition-opacity duration-200">
                 <button
                   class="text-cream-100/60 hover:text-accent transition-colors p-1 rounded hover:bg-white/10"
-                  title="Редактировать зону"
-                  @click.stop="openZoneEditModal(index)"
+                  title="Редактировать"
+                  @click.stop="openItemEditModal(item)"
                 >
                   <i class="fa-solid fa-pen text-xs"></i>
                 </button>
                 <button
                   class="text-cream-100/60 hover:text-error transition-colors p-1 rounded hover:bg-white/10"
-                  title="Удалить зону"
-                  @click.stop="deleteZone(index)"
+                  title="Удалить"
+                  @click.stop="deleteItem(item)"
                 >
                   <i class="fa-solid fa-trash text-xs"></i>
                 </button>
@@ -79,151 +94,212 @@
       </div>
     </div>
 
-    <!-- EditModal для одной зоны -->
-    <EditModal
-      :visible="isZoneEditModalOpen"
-      :title="zoneEditModalTitle"
-      :subtitle="zoneEditModalSubtitle"
-      :fields="zoneEditFields"
-      @close="closeZoneEditModal"
-      @save="handleZoneEditSave"
-    />
+    <!-- Пустое состояние -->
+    <div v-else class="flex items-center justify-center py-2">
+      <p class="text-forest-900/60 text-xs">Бегущая строка пуста</p>
+    </div>
 
-    <!-- EditModal для всех зон -->
+    <!-- EditModal для элемента -->
     <EditModal
-      :visible="isAllZonesEditModalOpen"
-      title="Редактирование всех зон"
-      subtitle="Измените названия всех зон зоопарка"
-      :fields="allZonesEditFields"
-      @close="closeAllZonesEditModal"
-      @save="handleAllZonesEditSave"
+      :visible="isItemEditModalOpen"
+      :title="itemEditModalTitle"
+      :subtitle="itemEditModalSubtitle"
+      :fields="itemEditFields"
+      @close="closeItemEditModal"
+      @save="handleItemEditSave"
     />
   </section>
-</template>
+</template> 
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, onMounted } from 'vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import EditModal from '@/components/overlay/EditModal.vue'
 
-// Флаг администратора
-const isAdmin = ref(true)
+import { useAuthStore } from '@/stores/auth'
+import { tickerService, type TickerItem } from '@/services/tickets.service' // ✅ Правильный импорт!
 
-// Состояние зон
-const zones = ref<string[]>([
-  'Африканская саванна',
-  'Тропический лес',
-  'Арктическая зона',
-  'Океанариум',
-  'Детский зоопарк',
-  'Ночное сафари'
+const authStore = useAuthStore()
+
+// ==================== СОСТОЯНИЕ ====================
+
+const isLoading = ref(true)
+const isSaving = ref(false)
+const tickerItems = ref<TickerItem[]>([])
+
+// Модалка
+const isItemEditModalOpen = ref(false)
+const itemEditModalTitle = ref('Редактирование элемента')
+const itemEditModalSubtitle = ref('Измените текст элемента')
+const editingItem = ref<TickerItem | null>(null)
+const isNewItem = ref(false)
+
+// ==================== ВЫЧИСЛЯЕМЫЕ СВОЙСТВА ====================
+
+// Только активные элементы для отображения
+const activeItems = computed(() => 
+  tickerItems.value.filter(item => item.isActive)
+)
+
+// Поля для редактирования
+const itemEditFields = computed(() => [
+  {
+    key: 'text',
+    label: 'Текст',
+    type: 'text' as const,
+    value: editingItem.value?.text || '',
+    placeholder: 'Например: Африканская саванна',
+    required: true,
+    hint: 'Текст, отображаемый в бегущей строке',
+    icon: 'fa-solid fa-font',
+  },
+  {
+    key: 'link',
+    label: 'Ссылка (опционально)',
+    type: 'url' as const,
+    value: editingItem.value?.link || '',
+    placeholder: 'https://example.com',
+    hint: 'Если указать — текст станет кликабельным',
+    icon: 'fa-solid fa-link',
+  },
+  {
+    key: 'icon',
+    label: 'Иконка (опционально)',
+    type: 'text' as const,
+    value: editingItem.value?.icon || '',
+    placeholder: 'Название иконки',
+    hint: 'Дополнительная иконка рядом с текстом',
+    icon: 'fa-solid fa-image',
+  },
+  {
+    key: 'displayOrder',
+    label: 'Порядок отображения',
+    type: 'number' as const,
+    value: editingItem.value?.displayOrder ?? 0,
+    placeholder: '0',
+    hint: 'Чем меньше число, тем раньше элемент',
+    icon: 'fa-solid fa-sort',
+  },
+  {
+    key: 'speed',
+    label: 'Скорость анимации',
+    type: 'number' as const,
+    value: editingItem.value?.speed ?? 30,
+    placeholder: '30',
+    hint: 'В секундах (меньше = быстрее)',
+    icon: 'fa-solid fa-gauge',
+  },
+  {
+    key: 'isActive',
+    label: 'Активен',
+    type: 'checkbox' as const,
+    value: editingItem.value?.isActive ?? true,
+    hint: 'Активные элементы отображаются в строке',
+    icon: 'fa-solid fa-toggle-on',
+  },
 ])
 
-// Состояние для модалки редактирования одной зоны
-const isZoneEditModalOpen = ref(false)
-const zoneEditModalTitle = ref('Редактирование зоны')
-const zoneEditModalSubtitle = ref('Измените название зоны')
-const editingZoneIndex = ref<number | null>(null)
-const isNewZone = ref(false)
+// ==================== ЗАГРУЗКА ДАННЫХ ====================
 
-// Состояние для модалки редактирования всех зон
-const isAllZonesEditModalOpen = ref(false)
-
-// Поля для редактирования одной зоны
-const zoneEditFields = computed(() => {
-  const zoneName = editingZoneIndex.value !== null ? zones.value[editingZoneIndex.value] : ''
+const loadTickerItems = async () => {
+  isLoading.value = true
   
-  return [
-    {
-      key: 'zoneName',
-      label: 'Название зоны',
-      value: zoneName,
-      placeholder: 'Например: Африканская саванна',
-      required: true,
-      hint: 'Это название будет отображаться в бегущей строке',
-      icon: 'fa-solid fa-map-marker-alt',
-      type: 'text' as const,
-    },
-  ]
-})
-
-// Поля для редактирования всех зон
-const allZonesEditFields = computed(() => {
-  return zones.value.map((zone, index) => ({
-    key: `zone_${index}`,
-    label: `Зона ${index + 1}`,
-    value: zone,
-    placeholder: `Название зоны ${index + 1}`,
-    required: true,
-    icon: 'fa-solid fa-map-marker-alt',
-    type: 'text' as const,
-  }))
-})
-
-// === EditModal: Одна зона ===
-const openZoneEditModal = (index: number) => {
-  editingZoneIndex.value = index
-  isNewZone.value = false
-  zoneEditModalTitle.value = 'Редактирование зоны'
-  zoneEditModalSubtitle.value = `Редактирование: ${zones.value[index]}`
-  isZoneEditModalOpen.value = true
-}
-
-const openNewZoneModal = () => {
-  editingZoneIndex.value = null
-  isNewZone.value = true
-  zoneEditModalTitle.value = 'Добавить новую зону'
-  zoneEditModalSubtitle.value = 'Введите название новой зоны'
-  isZoneEditModalOpen.value = true
-}
-
-const closeZoneEditModal = () => {
-  isZoneEditModalOpen.value = false
-  editingZoneIndex.value = null
-  isNewZone.value = false
-}
-
-const handleZoneEditSave = (values: Record<string, any>) => {
-  if (isNewZone.value) {
-    // Добавление новой зоны
-    zones.value.push(values.zoneName)
-    console.log('Добавлена новая зона:', values.zoneName)
-  } else if (editingZoneIndex.value !== null) {
-    // Обновление существующей зоны
-    zones.value[editingZoneIndex.value] = values.zoneName
-    console.log('Обновлена зона:', values.zoneName)
+  try {
+    const response = await tickerService.getAll()
+    tickerItems.value = response.items
+  } catch (error: any) {
+    console.error('Error loading ticker:', error)
+    ElMessage.error('Ошибка загрузки бегущей строки')
+  } finally {
+    isLoading.value = false
   }
 }
 
-// === EditModal: Все зоны ===
-const openAllZonesEditModal = () => {
-  isAllZonesEditModalOpen.value = true
+// ==================== CRUD ОПЕРАЦИИ ====================
+
+const openItemEditModal = (item: TickerItem) => {
+  editingItem.value = item
+  isNewItem.value = false
+  itemEditModalTitle.value = 'Редактирование элемента'
+  itemEditModalSubtitle.value = `Редактирование: ${item.text}`
+  isItemEditModalOpen.value = true
 }
 
-const closeAllZonesEditModal = () => {
-  isAllZonesEditModalOpen.value = false
+const openNewItemModal = () => {
+  editingItem.value = null
+  isNewItem.value = true
+  itemEditModalTitle.value = 'Добавить новый элемент'
+  itemEditModalSubtitle.value = 'Заполните данные нового элемента'
+  isItemEditModalOpen.value = true
 }
 
-const handleAllZonesEditSave = (values: Record<string, any>) => {
-  // Обновляем все зоны
-  const newZones: string[] = []
-  for (let i = 0; i < zones.value.length; i++) {
-    const key = `zone_${i}`
-    if (values[key] !== undefined) {
-      newZones.push(values[key])
+const closeItemEditModal = () => {
+  isItemEditModalOpen.value = false
+  editingItem.value = null
+  isNewItem.value = false
+}
+
+const handleItemEditSave = async (values: Record<string, any>) => {
+  if (isSaving.value) return
+  isSaving.value = true
+  
+  try {
+    const data = {
+      text: values.text,
+      link: values.link || null,
+      icon: values.icon || null,
+      displayOrder: Number(values.displayOrder) || 0,
+      speed: Number(values.speed) || 30,
+      isActive: values.isActive ?? true,
+    }
+    
+    if (isNewItem.value) {
+      await tickerService.create(data)
+      ElMessage.success(`Элемент "${values.text}" добавлен`)
+    } else if (editingItem.value) {
+      await tickerService.update(editingItem.value.id, data)
+      ElMessage.success(`Элемент "${values.text}" обновлён`)
+    }
+    
+    await loadTickerItems()
+    closeItemEditModal()
+  } catch (error: any) {
+    console.error('Save error:', error)
+    ElMessage.error(error.response?.data?.error || 'Ошибка сохранения')
+  } finally {
+    isSaving.value = false
+  }
+}
+
+const deleteItem = async (item: TickerItem) => {
+  try {
+    await ElMessageBox.confirm(
+      `Удалить элемент "${item.text}"?`,
+      'Подтверждение удаления',
+      {
+        confirmButtonText: 'Удалить',
+        cancelButtonText: 'Отмена',
+        type: 'warning',
+        confirmButtonClass: 'bg-red-500 hover:bg-red-600',
+      }
+    )
+    
+    await tickerService.delete(item.id)
+    ElMessage.success(`Элемент "${item.text}" удалён`)
+    await loadTickerItems()
+  } catch (error: any) {
+    if (error !== 'cancel') {
+      console.error('Delete error:', error)
+      ElMessage.error(error.response?.data?.error || 'Ошибка удаления')
     }
   }
-  zones.value = newZones
-  console.log('Обновлены все зоны:', newZones)
 }
 
-// Удаление зоны
-const deleteZone = (index: number) => {
-  const zoneName = zones.value[index]
-  if (confirm(`Удалить зону "${zoneName}"?`)) {
-    zones.value.splice(index, 1)
-    console.log('Удалена зона:', zoneName)
-  }
-}
+// ==================== LIFECYCLE ====================
+
+onMounted(() => {
+  loadTickerItems()
+})
 </script>
 
 <style scoped>
@@ -231,7 +307,6 @@ const deleteZone = (index: number) => {
   animation: marquee 25s linear infinite;
 }
 
-/* Останавливаем анимацию при наведении для удобства чтения */
 .marquee-wrap:hover .marquee-track {
   animation-play-state: paused;
 }

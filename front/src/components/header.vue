@@ -2,7 +2,7 @@
   <header class="fixed inset-x-0 top-0 z-50 transition-all duration-300">
     <!-- Индикатор админ-режима -->
     <div
-      v-if="isAdmin"
+      v-if="authStore.isAdmin"
       class="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-accent to-transparent animate-pulse-slow"
     ></div>
 
@@ -13,7 +13,7 @@
         'h-20 bg-transparent': !isScrolled,
       }"
     >
-      <!-- Logo (теперь кликабельный с переходом на главную) -->
+      <!-- Logo -->
       <router-link
         to="/"
         class="text-cream-100 group text-2xl font-black tracking-tight whitespace-nowrap"
@@ -22,7 +22,7 @@
         Zoo<span class="text-lime group-hover:text-lime/80 transition-colors">Verse</span>
         <!-- Admin Badge -->
         <span
-          v-if="isAdmin"
+          v-if="authStore.isAdmin"
           class="ml-2 inline-flex items-center gap-1 rounded-full bg-accent/20 border border-accent/40 px-2 py-0.5 text-[10px] font-bold text-accent uppercase tracking-wider align-middle"
         >
           <i class="fa-solid fa-shield-halved text-[8px]"></i>
@@ -77,7 +77,7 @@
         </li>
 
         <!-- Admin Toggle -->
-        <li v-if="isAdmin" class="flex items-center gap-2">
+        <li v-if="authStore.isAdmin" class="flex items-center gap-2">
           <button
             @click="emit('toggleAdmin')"
             class="group/admin-toggle relative flex items-center gap-2 rounded-full border border-accent/30 bg-accent/10 px-3 py-1.5 transition-all hover:border-accent/60 hover:bg-accent/20"
@@ -93,24 +93,38 @@
         </li>
 
         <!-- USER DROPDOWN -->
-        <li class="group/user relative">
+        <li v-if="authStore.isAuthenticated" class="group/user relative">
           <button
             class="flex items-center gap-2 rounded-full border border-white/5 px-4 py-1.5 transition-all duration-300 hover:-translate-y-0.5 hover:border-lime-400/50 hover:bg-white/10"
-            :class="{ 'border-accent/30 bg-accent/5': isAdmin }"
+            :class="{ 'border-accent/30 bg-accent/5': authStore.isAdmin }"
             aria-label="User profile"
           >
             <div class="relative">
+              <!-- ✅ Аватар пользователя -->
               <div
-                class="text-forest-900 flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-lime-400 to-amber-400 text-sm font-bold shadow-inner transition-transform duration-300 group-hover/user:scale-110"
-                :class="{ 'ring-2 ring-accent/50': isAdmin }"
+                class="text-forest-900 flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-lime-400 to-amber-400 text-sm font-bold shadow-inner transition-transform duration-300 group-hover/user:scale-110 overflow-hidden"
+                :class="{ 'ring-2 ring-accent/50': authStore.isAdmin }"
               >
-                {{ isAdmin ? 'A' : 'U' }}
+                <!-- Если есть аватар - показываем изображение -->
+                <img
+                  v-if="authStore.userAvatar"
+                  :src="authStore.userAvatar"
+                  alt="Avatar"
+                  class="w-full h-full object-cover"
+                />
+                <!-- Иначе инициал -->
+                <span v-else>{{ userInitial }}</span>
               </div>
               <span
                 class="border-forest-900 ring-forest-900/50 absolute -right-0.5 -bottom-0.5 h-3 w-3 rounded-full border-2 ring-2"
-                :class="isAdmin ? 'bg-accent' : 'bg-lime-400'"
+                :class="authStore.isAdmin ? 'bg-accent' : 'bg-lime-400'"
               ></span>
             </div>
+
+            <!-- Имя пользователя (опционально) -->
+            <span class="hidden lg:block text-sm text-cream-100/80 max-w-[120px] truncate">
+              {{ authStore.user?.name }}
+            </span>
 
             <BaseIcon
               name="arrowDown"
@@ -120,53 +134,98 @@
             />
           </button>
 
-          <!-- Dropdown -->
+          <!-- Dropdown Menu -->
           <div
-            class="bg-forest-200/60 invisible absolute top-full right-0 z-50 mt-2 w-52 translate-y-2 rounded-2xl border border-white/10 py-2 opacity-0 shadow-2xl shadow-black/60 backdrop-blur-xl transition-all duration-200 ease-out group-hover/user:visible group-hover/user:translate-y-0 group-hover/user:opacity-100"
+            class="bg-forest-200/60 invisible absolute top-full right-0 z-50 mt-2 w-64 rounded-2xl border border-white/10 py-2 opacity-0 shadow-2xl shadow-black/60 backdrop-blur-xl transition-all duration-200 ease-out group-hover/user:visible group-hover/user:translate-y-0 group-hover/user:opacity-100"
           >
-            <div v-if="isAdmin" class="px-4 py-2 border-b border-white/10 mb-1">
-              <div class="flex items-center gap-2">
-                <i class="fa-solid fa-shield-halved text-accent text-xs"></i>
-                <span class="text-xs font-bold text-accent uppercase tracking-wider">Режим администратора</span>
+            <!-- Информация о пользователе -->
+            <div class="px-4 py-3 border-b border-white/10 mb-1">
+              <div class="flex items-center gap-3">
+                <!-- ✅ Аватар в dropdown -->
+                <div
+                  class="text-forest-900 flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-lime-400 to-amber-400 font-bold overflow-hidden"
+                >
+                  <img
+                    v-if="authStore.userAvatar"
+                    :src="authStore.userAvatar"
+                    alt="Avatar"
+                    class="w-full h-full object-cover"
+                  />
+                  <span v-else class="text-lg">{{ userInitial }}</span>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <p class="text-sm font-semibold text-cream-100 truncate">
+                    {{ authStore.user?.name }}
+                  </p>
+                  <p class="text-xs text-white/50 truncate">
+                    {{ authStore.user?.email }}
+                  </p>
+                  <div v-if="authStore.isAdmin" class="mt-1 flex items-center gap-1">
+                    <i class="fa-solid fa-shield-halved text-accent text-[10px]"></i>
+                    <span class="text-[10px] font-bold text-accent uppercase">Администратор</span>
+                  </div>
+                </div>
               </div>
-              <p class="text-[10px] text-white/40 mt-1">Доступно редактирование всех секций</p>
             </div>
 
+            <!-- Профиль -->
             <button
-              class="flex w-full items-center gap-3 rounded-xl px-3 py-1.5 text-left text-white/80 transition-colors hover:text-lime-400"
+              class="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-white/80 transition-colors hover:text-lime-400 hover:bg-white/5"
               @click="emit('openProfile')"
             >
               <i class="fa-solid fa-user text-xs w-4"></i>
               <span>Профиль</span>
             </button>
 
+            <!-- Мои билеты -->
             <button
-              v-if="!isAdmin"
-              class="flex w-full items-center gap-3 rounded-xl px-3 py-1.5 text-left text-white/80 transition-colors hover:text-accent"
-              @click="emit('toggleAdmin')"
+              class="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-white/80 transition-colors hover:text-lime-400 hover:bg-white/5"
+              @click="goToBookings"
             >
-              <i class="fa-solid fa-shield-halved text-xs w-4"></i>
-              <span>Войти как админ</span>
+              <i class="fa-solid fa-ticket text-xs w-4"></i>
+              <span>Мои билеты</span>
             </button>
 
+            <!-- Настройки -->
             <button
-              v-else
-              class="flex w-full items-center gap-3 rounded-xl px-3 py-1.5 text-left text-white/80 transition-colors hover:text-accent"
-              @click="emit('toggleAdmin')"
+              class="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-white/80 transition-colors hover:text-lime-400 hover:bg-white/5"
+              @click="emit('openProfile')"
             >
-              <i class="fa-solid fa-shield text-xs w-4"></i>
-              <span>Выйти из режима админа</span>
+              <i class="fa-solid fa-gear text-xs w-4"></i>
+              <span>Настройки</span>
+            </button>
+
+            <!-- Админка (только для админов) -->
+            <button
+              v-if="authStore.isAdmin"
+              class="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-white/80 transition-colors hover:text-accent hover:bg-white/5"
+              @click="goToAdmin"
+            >
+              <i class="fa-solid fa-shield-halved text-xs w-4"></i>
+              <span>Панель администратора</span>
             </button>
 
             <div class="my-1 h-px w-full bg-white/10"></div>
 
+            <!-- Выйти -->
             <button
-              class="flex w-full items-center gap-3 rounded-xl px-3 py-1.5 text-left text-white/80 transition-colors hover:text-red-400"
+              class="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-white/80 transition-colors hover:text-red-400 hover:bg-white/5"
+              @click="handleLogout"
             >
               <i class="fa-solid fa-right-from-bracket text-xs w-4"></i>
               <span>Выйти</span>
             </button>
           </div>
+        </li>
+
+        <!-- Login Button (если не авторизован) -->
+        <li v-else>
+          <router-link
+            to="/login"
+            class="rounded-full border border-white/20 px-5 py-2 text-sm font-medium text-cream-100/90 transition-all hover:border-lime-400/50 hover:bg-lime-400/5 hover:text-lime-400"
+          >
+            Войти
+          </router-link>
         </li>
       </ul>
 
@@ -200,10 +259,38 @@
     >
       <div
         v-if="isMenuOpen"
-        class="absolute top-full right-0 left-0 flex flex-col gap-2 border-b border-white/10 bg-neutral-900/95 p-6 shadow-2xl backdrop-blur-xl md:hidden"
+        class="absolute top-full right-0 left-0 flex flex-col gap-2 border-b border-white/10 bg-neutral-900/95 p-6 shadow-2xl backdrop-blur-xl md:hidden max-h-[calc(100vh-5rem)] overflow-y-auto"
       >
+        <!-- Информация о пользователе (мобильная) -->
         <div
-          v-if="isAdmin"
+          v-if="authStore.isAuthenticated"
+          class="flex items-center gap-3 px-4 py-3 mb-2 rounded-xl border border-white/10 bg-white/5"
+        >
+          <!-- ✅ Аватар -->
+          <div
+            class="text-forest-900 flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-lime-400 to-amber-400 font-bold overflow-hidden"
+          >
+            <img
+              v-if="authStore.userAvatar"
+              :src="authStore.userAvatar"
+              alt="Avatar"
+              class="w-full h-full object-cover"
+            />
+            <span v-else class="text-lg">{{ userInitial }}</span>
+          </div>
+          <div class="flex-1 min-w-0">
+            <p class="text-sm font-semibold text-cream-100 truncate">
+              {{ authStore.user?.name }}
+            </p>
+            <p class="text-xs text-white/50 truncate">
+              {{ authStore.user?.email }}
+            </p>
+          </div>
+        </div>
+
+        <!-- Админ-индикатор -->
+        <div
+          v-if="authStore.isAdmin"
           class="flex items-center justify-between rounded-xl border border-accent/30 bg-accent/10 px-4 py-2 mb-2"
         >
           <div class="flex items-center gap-2">
@@ -218,6 +305,7 @@
           </button>
         </div>
 
+        <!-- Навигационные ссылки -->
         <template v-for="(block, index) in blocks" :key="index">
           <template v-if="block.links">
             <a
@@ -232,6 +320,7 @@
           </template>
         </template>
 
+        <!-- Кнопка "Купить билет" -->
         <a
           href="#visit"
           @click.prevent="handleNavLinkClick('#visit'); closeMenu()"
@@ -239,15 +328,63 @@
         >
           Купить билет
         </a>
+
+        <!-- Кнопка входа для мобильных -->
+        <router-link
+          v-if="!authStore.isAuthenticated"
+          to="/login"
+          @click="closeMenu()"
+          class="mt-2 w-full rounded-xl border border-white/20 py-3 text-center text-cream-100/90 hover:border-lime-400/50 hover:bg-lime-400/5 hover:text-lime-400 transition-all"
+        >
+          Войти
+        </router-link>
+
+        <!-- Действия для авторизованных -->
+        <template v-if="authStore.isAuthenticated">
+          <button
+            @click="emit('openProfile'); closeMenu()"
+            class="mt-2 w-full rounded-xl border border-white/20 py-3 text-center text-cream-100/90 hover:border-lime-400/50 hover:bg-lime-400/5 hover:text-lime-400 transition-all"
+          >
+            <i class="fa-solid fa-user mr-2"></i>
+            Профиль
+          </button>
+
+          <button
+            @click="goToBookings(); closeMenu()"
+            class="w-full rounded-xl border border-white/20 py-3 text-center text-cream-100/90 hover:border-lime-400/50 hover:bg-lime-400/5 hover:text-lime-400 transition-all"
+          >
+            <i class="fa-solid fa-ticket mr-2"></i>
+            Мои билеты
+          </button>
+
+          <button
+            v-if="authStore.isAdmin"
+            @click="goToAdmin(); closeMenu()"
+            class="w-full rounded-xl border border-accent/30 bg-accent/10 py-3 text-center text-accent hover:bg-accent/20 transition-all"
+          >
+            <i class="fa-solid fa-shield-halved mr-2"></i>
+            Панель администратора
+          </button>
+
+          <button
+            @click="handleLogout"
+            class="w-full rounded-xl border border-red-500/30 py-3 text-center text-red-400 hover:bg-red-500/10 transition-all"
+          >
+            <i class="fa-solid fa-right-from-bracket mr-2"></i>
+            Выйти
+          </button>
+        </template>
       </div>
     </Transition>
   </header>
 </template>
 
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref } from 'vue'
+import { onMounted, onUnmounted, ref, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
+import { ElMessageBox, ElMessage } from 'element-plus'
 import BaseIcon from '@/components/ui/BaseIcon.vue'
+import { useAuthStore } from '@/stores/auth'
 
 interface NavLink {
   name: string
@@ -263,10 +400,8 @@ interface NavBlock {
 const props = withDefaults(
   defineProps<{
     blocks?: NavBlock[]
-    isAdmin?: boolean
   }>(),
   {
-    isAdmin: false,
     blocks: () => [
       {
         links: [
@@ -292,47 +427,50 @@ const emit = defineEmits<{
 
 const router = useRouter()
 const route = useRoute()
+const authStore = useAuthStore()
 
 const isScrolled = ref(false)
 const isMenuOpen = ref(false)
-const isOpenUser = ref(false)
 
-// 🔑 Умная навигация: если мы не на главной — сначала переходим на главную, потом скроллим
+// Первая буква имени пользователя
+const userInitial = computed(() => {
+  const name = authStore.user?.name
+  return name ? name.charAt(0).toUpperCase() : 'U'
+})
+
+// ==================== NAVIGATION ====================
+
+// Умная навигация
 const handleNavLinkClick = (path: string) => {
   if (route.path !== '/') {
-    // Сначала переходим на главную, потом скроллим к секции
     router.push('/').then(() => {
-      // Небольшая задержка, чтобы страница успела отрендериться
       setTimeout(() => {
         scrollToSection(path)
       }, 100)
     })
   } else {
-    // Уже на главной — просто скроллим
     scrollToSection(path)
   }
 }
 
-// 🔑 Клик по логотипу
+// Клик по логотипу
 const handleLogoClick = () => {
   if (route.path === '/') {
-    // Если уже на главной — скроллим наверх
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
-  // Если не на главной — router-link сам сделает переход
 }
 
-// 🔑 Проверка активной ссылки
+// Проверка активной ссылки
 const isActiveLink = (path: string) => {
   return route.hash === path
 }
 
-// 🔑 Плавный скролл к секции
+// Плавный скролл к секции
 const scrollToSection = (hash: string) => {
   if (!hash || hash === '#') return
   const element = document.querySelector(hash)
   if (element) {
-    const offset = 80 // Высота хедера
+    const offset = 80
     const elementPosition = element.getBoundingClientRect().top + window.scrollY
     window.scrollTo({
       top: elementPosition - offset,
@@ -340,6 +478,44 @@ const scrollToSection = (hash: string) => {
     })
   }
 }
+
+// Переход к моим билетам
+const goToBookings = () => {
+  emit('openProfile')
+  // Можно добавить переключение на вкладку "Билеты" в профиле
+}
+
+// Переход в админку
+const goToAdmin = () => {
+  router.push('/admin/dashboard')
+}
+
+// ==================== AUTH ====================
+
+// Обработка выхода
+const handleLogout = async () => {
+  try {
+    await ElMessageBox.confirm(
+      'Вы уверены, что хотите выйти?',
+      'Подтверждение выхода',
+      {
+        confirmButtonText: 'Выйти',
+        cancelButtonText: 'Отмена',
+        type: 'warning',
+        confirmButtonClass: 'bg-red-500 hover:bg-red-600',
+      }
+    )
+    
+    await authStore.logout()
+    ElMessage.success('Вы вышли из аккаунта')
+    closeMenu()
+    router.push('/login')
+  } catch (error) {
+    // Пользователь отменил
+  }
+}
+
+// ==================== UI ====================
 
 const handleScroll = () => {
   isScrolled.value = window.scrollY > 20
@@ -359,11 +535,12 @@ const getIcon = (icon: string) => {
   return 'span'
 }
 
+// ==================== LIFECYCLE ====================
+
 onMounted(() => {
   handleScroll()
   window.addEventListener('scroll', handleScroll, { passive: true })
   
-  // 🔑 Если пришли по ссылке с hash (например, /#events) — скроллим к секции
   if (route.hash) {
     setTimeout(() => {
       scrollToSection(route.hash)
@@ -401,5 +578,24 @@ html {
 
 .animate-pulse-slow {
   animation: pulse-slow 2s ease-in-out infinite;
+}
+
+/* Кастомный скроллбар для мобильного меню */
+.overflow-y-auto::-webkit-scrollbar {
+  width: 6px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-thumb {
+  background: rgba(168, 201, 107, 0.3);
+  border-radius: 10px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-thumb:hover {
+  background: rgba(168, 201, 107, 0.5);
 }
 </style>

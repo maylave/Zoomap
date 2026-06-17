@@ -24,20 +24,16 @@ const router = createRouter({
       name: 'doc',
       component: ApiDocs,
     },
-    {
-      path: '/api', // 👈 Добавил маршрут для API
-      name: 'ApiDocs',
-      component: ApiDocs
-    },
+
     {
       path: '/zones',
       name: 'ZoneDetail',
-      component: ZonesAnimals
+      component: ZonesAnimals,
     },
     {
       path: '/animals',
       name: 'AnimalsCatalog',
-      component: AnimalsCatalog
+      component: AnimalsCatalog,
     },
     {
       path: '/404',
@@ -46,8 +42,8 @@ const router = createRouter({
     },
     {
       path: '/:pathMatch(.*)*', // 👈 Все несуществующие маршруты → 404
-      redirect: '/404'
-    }
+      redirect: '/404',
+    },
   ],
 })
 

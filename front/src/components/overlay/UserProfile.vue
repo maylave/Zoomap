@@ -56,17 +56,16 @@
 
           <!-- ПРАВЫЙ КОНТЕНТ -->
           <MainContent :context="currentContext" :active-menu="activeMenu">
-    <!-- ✅ Один компонент вместо кучи v-if -->
-    <ProfileContent
-      :active-menu="activeMenu"
-      :profile="profile"
-      :is-editing-profile="isEditingProfile"
-      :notifications="notifications"
-      :appearance="appearance"
-      
-      @toggle-edit="isEditingProfile = !isEditingProfile"
-    />
-  </MainContent>
+            <ProfileContent
+              :active-menu="activeMenu"
+              :profile="profile"
+              :is-editing-profile="isEditingProfile"
+              :notifications="notifications"
+              :appearance="appearance"
+              :promocodes="promocodes"
+              @toggle-edit="isEditingProfile = !isEditingProfile"
+            />
+          </MainContent>
         </div>
       </div>
     </div>
@@ -78,7 +77,7 @@ import { ref, computed, watch, onBeforeUnmount } from 'vue'
 import SidebarMenu from '@/components/ui/leftbar.vue'
 import MainContent from '@/components/layout/MainContent.vue'
 import BaseIcon from '@/components/ui/BaseIcon.vue'
- import ProfileContent from '@/components/layout/ProfileContent.vue'
+import ProfileContent from '@/components/layout/ProfileContent.vue'
 
 // Импортируем конфигурацию из отдельного файла
 import { menuGroups, menuContexts } from '@/static/profileMenu'
@@ -105,19 +104,42 @@ const profile = ref({
 
 const notifications = ref({ email: true, push: true, sound: false })
 const appearance = ref({ theme: 'Тёмная', language: 'ru' })
-const security = ref({ currentPassword: '', newPassword: '', confirmPassword: '' })
-const privacy = ref({ publicProfile: true, showEmail: false, showPhone: false })
-const devices = ref([
-  { id: 1, name: 'Chrome на Windows', lastActive: 'Сейчас' },
-  { id: 2, name: 'Safari на iPhone', lastActive: '2 часа назад' },
-  { id: 3, name: 'Firefox на macOS', lastActive: 'Вчера' },
-])
 
-// Данные админки
-const users = ref([
-  { id: 1, firstName: 'Мария', lastName: 'Иванова', email: 'maria@example.com', role: 'admin' as const, status: 'active' as const, registeredAt: '2024-01-15', lastLogin: '2 часа назад' },
-  { id: 2, firstName: 'Алексей', lastName: 'Петров', email: 'alexey@example.com', role: 'moderator' as const, status: 'active' as const, registeredAt: '2024-02-20', lastLogin: 'Вчера' },
-  { id: 3, firstName: 'Елена', lastName: 'Сидорова', email: 'elena@example.com', role: 'user' as const, status: 'active' as const, registeredAt: '2024-03-10', lastLogin: '3 дня назад' },
+// ✅ Промокоды (моковые данные, позже заменим на API)
+const promocodes = ref([
+  {
+    id: 1,
+    code: 'ZOO10-M5X8K2P9',
+    discount: 10,
+    type: 'percent' as const,
+    status: 'active' as const,
+    createdAt: '2026-06-15T10:30:00Z',
+    expiresAt: '2026-07-15T23:59:59Z',
+    description: 'Скидка за подписку на новости',
+    used: false,
+  },
+  {
+    id: 2,
+    code: 'SUMMER2026',
+    discount: 500,
+    type: 'fixed' as const,
+    status: 'active' as const,
+    createdAt: '2026-06-01T08:00:00Z',
+    expiresAt: '2026-08-31T23:59:59Z',
+    description: 'Летняя акция',
+    used: false,
+  },
+  {
+    id: 3,
+    code: 'BIRTHDAY15',
+    discount: 15,
+    type: 'percent' as const,
+    status: 'expired' as const,
+    createdAt: '2026-01-10T12:00:00Z',
+    expiresAt: '2026-02-10T23:59:59Z',
+    description: 'Подарок на день рождения',
+    used: true,
+  },
 ])
 
 // Контекст для MainContent

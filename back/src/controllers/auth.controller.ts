@@ -9,12 +9,12 @@ import {
   extractLogin,
 } from "../utils/auth.utils.js";
 
-interface UserInput {
+export interface userInput {
   name: string;
   email: string;
 }
 
-export async function register(input: UserInput) {
+export async function register(input: userInput) {
   const { name, email } = input;
   const existingUser = await db
     .select()

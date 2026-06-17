@@ -12,9 +12,7 @@
     >
       <!-- Контейнер с кнопками и общим фоном -->
       <div 
-        class="absolute bottom-full left-1/2 flex -translate-x-1/2 flex-col-reverse items-center overflow-hidden rounded-full bg-black/20 
-        border border-forest-100/10
-        shadow-xl backdrop-blur-md transition-all duration-500 ease-out"
+        class="absolute bottom-full left-1/2 flex -translate-x-1/2 flex-col-reverse items-center overflow-hidden rounded-full bg-black/20 border border-forest-100/10 shadow-xl backdrop-blur-md transition-all duration-500 ease-out"
         :class="isHovered ? 'mb-2 opacity-100 border-forest-100/40' : 'mb-0 opacity-0'"
         :style="{ 
           maxHeight: isHovered ? `${(actions.length * 2.5) + 3}rem` : '0rem',
@@ -50,10 +48,7 @@
 
       <!-- Главная кнопка -->
       <button
-        class="relative flex h-12 w-12 items-center justify-center  border rounded-2xl
-        border-transparent bg-black/5 text-white shadow-xl backdrop-blur-md transition-all duration-300 hover:scale-110 hover:bg-forest-300/80 hover:border-lime/40 hover:shadow-[0_0_20px_rgba(168,201,107,0.3)]
-        hover:rounded-full 
-        "
+        class="relative flex h-12 w-12 items-center justify-center border rounded-2xl border-transparent bg-black/5 text-white shadow-xl backdrop-blur-md transition-all duration-300 hover:scale-110 hover:bg-forest-300/80 hover:border-lime/40 hover:shadow-[0_0_20px_rgba(168,201,107,0.3)] hover:rounded-full"
         :title="editLabel"
         @click.stop="handleEdit"
       >
@@ -82,7 +77,8 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  isAdmin: true,
+  // ✅ ИСПРАВЛЕНО: было true, стало false
+  isAdmin: false,
   editLabel: 'Редактировать',
   actions: () => [],
 })
@@ -101,3 +97,7 @@ const handleAction = (action: Action) => {
   action.onClick()
 }
 </script>
+
+<style scoped>
+/* Дополнительные стили при необходимости */
+</style>

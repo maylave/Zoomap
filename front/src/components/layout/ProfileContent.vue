@@ -7,6 +7,7 @@ const sections: Record<string, Component> = {
   notifications: defineAsyncComponent(() => import('./sections/NotificationsSection.vue')),
   appearance: defineAsyncComponent(() => import('./sections/AppearanceSection.vue')),
   history: defineAsyncComponent(() => import('./sections/HistorySection.vue')),
+  promocodes: defineAsyncComponent(() => import('./sections/PromocodesSection.vue')), // ✅ Добавлено
   admin: defineAsyncComponent(() => import('./sections/AdminSection.vue')),
 }
 
@@ -16,7 +17,7 @@ const props = defineProps<{
   isEditingProfile: boolean
   notifications: any
   appearance: any
-  users: any  // ✅ Добавлено для админки
+  promocodes?: any[] // ✅ Добавлено
 }>()
 
 const emit = defineEmits<{
@@ -38,14 +39,18 @@ const currentProps = computed(() => {
     case 'appearance':
       return { appearance: props.appearance }
     case 'history':
-      return {}  // История не требует пропсов (данные внутри компонента)
+      return {}
+    case 'promocodes':
+      return { promocodes: props.promocodes || [] } // ✅ Добавлено
     case 'admin':
-      return { users: props.users }
+      return {}
     default:
       return {}
   }
 })
 </script>
+
+
 
 <template>
   <Transition name="fade" mode="out-in">

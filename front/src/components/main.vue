@@ -1,109 +1,63 @@
 <template>
-  <Header @open-profile="isProfileOpen = true" />
-  
-  <EditableSection
-    @edit="editHero"
-    :actions="[
-      { 
-        label: 'Режим редактирования', 
-        icon: 'fa-solid fa-pen-to-square',
-        onClick: toggleHeroEditMode 
-      },
-      { 
-        label: 'Изменить фон', 
-        icon: 'fa-solid fa-image',
-        onClick: editHeroBackground 
-      },
-    ]"
-  >
-    <Hero ref="heroRef" />
-  </EditableSection>
+  <div class="min-h-screen bg-forest-400">
+    <Header 
+      @open-profile="isProfileOpen = true"
+      @toggle-admin="toggleAdminMode"
+    />
+    
+    <!-- Hero Section -->
+    <EditableSection
+      @edit="editHero"
+      :actions="getHeroActions()"
+      :is-admin-mode="isAdminMode"
+    >
+      <Hero ref="heroRef" />
+    </EditableSection>
 
-  <Marquee />
+    <Marquee />
 
-  <EditableSection
-    @edit="editEvents"
-    :actions="[
-      { 
-        label: 'Изменить заголовок', 
-        icon: 'fa-solid fa-heading',
-        onClick: editTitle 
-      },
-      { 
-        label: 'Изменить фон', 
-        icon: 'fa-solid fa-image',
-        onClick: editBackground 
-      },
-      { 
-        label: 'Удалить события', 
-        icon: 'fa-solid fa-trash',
-        variant: 'danger',
-        onClick: enableEventsDeleteMode 
-      },
-    ]"
-  >
-    <Events ref="eventsRef" />
-  </EditableSection>
+    <!-- Events Section -->
+    <EditableSection
+      @edit="editEvents"
+      :actions="getEventsActions()"
+      :is-admin-mode="isAdminMode"
+    >
+      <Events ref="eventsRef" />
+    </EditableSection>
 
-  <EditableSection
-    @edit="editGallery"
-    :actions="[
-      { 
-        label: 'Изменить заголовок', 
-        icon: 'fa-solid fa-heading',
-        onClick: editGalleryTitle 
-      },
-      { 
-        label: 'Изменить описание', 
-        icon: 'fa-solid fa-align-left',
-        onClick: editGalleryDescription 
-      },
-      { 
-        label: 'Удалить фото', 
-        icon: 'fa-solid fa-trash',
-        variant: 'danger',
-        onClick: enableGalleryDeleteMode 
-      },
-    ]"
-  >
-    <Gallery ref="galleryRef" />
-  </EditableSection>
+    <!-- Gallery Section -->
+    <EditableSection
+      @edit="editGallery"
+      :actions="getGalleryActions()"
+      :is-admin-mode="isAdminMode"
+    >
+      <Gallery ref="galleryRef" />
+    </EditableSection>
 
-  <EditableSection
-    @edit="editVisit"
-    :actions="[
-      { 
-        label: 'Изменить заголовок', 
-        icon: 'fa-solid fa-heading',
-        onClick: editVisitTitle 
-      },
-      { 
-        label: 'Изменить описание', 
-        icon: 'fa-solid fa-align-left',
-        onClick: editVisitDescription 
-      },
-      { 
-        label: 'Удалить билеты', 
-        icon: 'fa-solid fa-trash',
-        variant: 'danger',
-        onClick: enableVisitDeleteMode 
-      },
-    ]"
-  >
-    <Visit ref="visitRef" />
-  </EditableSection>
+    <!-- Visit Section -->
+    <EditableSection
+      @edit="editVisit"
+      :actions="getVisitActions()"
+      :is-admin-mode="isAdminMode"
+    >
+      <Visit ref="visitRef" />
+    </EditableSection>
 
-  <Form />
+    <Form />
 
-  <UserProfile 
-    :visible="isProfileOpen" 
-    @close="isProfileOpen = false" 
-  />
+    <!-- Profile Modal -->
+    <UserProfile 
+      :visible="isProfileOpen" 
+      @close="isProfileOpen = false" 
+    />
+  </div>
 </template>
 
 <script setup lang="ts">
+import { ref, onMounted, computed } from 'vue'
+import { ElMessage } from 'element-plus'
+import { useAuthStore } from '@/stores/auth'
 import EditableSection from './layout/EditableSection.vue'
-import { ref } from 'vue'
 import Header from '@/components/header.vue'
 import UserProfile from './overlay/UserProfile.vue'
 import Hero from '@/components/hero.vue'
@@ -113,13 +67,134 @@ import Gallery from './home/gallery.vue'
 import Marquee from './home/marquee.vue'
 import Visit from './home/visit.vue'
 
+const authStore = useAuthStore()
+
+// Refs
 const heroRef = ref<InstanceType<typeof Hero> | null>(null)
 const eventsRef = ref<InstanceType<typeof Events> | null>(null)
 const galleryRef = ref<InstanceType<typeof Gallery> | null>(null)
 const visitRef = ref<InstanceType<typeof Visit> | null>(null)
-const isProfileOpen = ref(false)
 
-// Hero handlers
+// State
+const isProfileOpen = ref(false)
+const isAdminMode = ref(false)
+
+// ==================== LIFECYCLE ====================
+
+onMounted(async () => {
+  // Инициализация авторизации
+  await authStore.init()
+  
+  // ✅ Если админ - включаем режим редактирования
+  if (authStore.isAdmin) {
+    isAdminMode.value = true
+  }
+})
+
+// ==================== ADMIN MODE ====================
+
+const toggleAdminMode = () => {
+  if (!authStore.isAdmin) {
+    ElMessage.warning('Только администраторы могут переключать режим')
+    return
+  }
+  
+  isAdminMode.value = !isAdminMode.value
+  ElMessage.success(isAdminMode.value ? 'Режим редактирования включён' : 'Режим редактирования выключен')
+}
+
+// ==================== ACTIONS GENERATORS ====================
+// ✅ Возвращаем действия ТОЛЬКО если админ И в режиме редактирования
+
+const getHeroActions = () => {
+  // ✅ Проверяем: админ И в режиме редактирования
+  if (!authStore.isAdmin || !isAdminMode.value) return []
+  
+  return [
+    { 
+      label: 'Режим редактирования', 
+      icon: 'fa-solid fa-pen-to-square',
+      onClick: toggleHeroEditMode 
+    },
+    { 
+      label: 'Изменить фон', 
+      icon: 'fa-solid fa-image',
+      onClick: editHeroBackground 
+    },
+  ]
+}
+
+const getEventsActions = () => {
+  if (!authStore.isAdmin || !isAdminMode.value) return []
+  
+  return [
+    { 
+      label: 'Изменить заголовок', 
+      icon: 'fa-solid fa-heading',
+      onClick: editTitle 
+    },
+    { 
+      label: 'Изменить фон', 
+      icon: 'fa-solid fa-image',
+      onClick: editBackground 
+    },
+    { 
+      label: 'Удалить события', 
+      icon: 'fa-solid fa-trash',
+      variant: 'danger' as const,
+      onClick: enableEventsDeleteMode 
+    },
+  ]
+}
+
+const getGalleryActions = () => {
+  if (!authStore.isAdmin || !isAdminMode.value) return []
+  
+  return [
+    { 
+      label: 'Изменить заголовок', 
+      icon: 'fa-solid fa-heading',
+      onClick: editGalleryTitle 
+    },
+    { 
+      label: 'Изменить описание', 
+      icon: 'fa-solid fa-align-left',
+      onClick: editGalleryDescription 
+    },
+    { 
+      label: 'Удалить фото', 
+      icon: 'fa-solid fa-trash',
+      variant: 'danger' as const,
+      onClick: enableGalleryDeleteMode 
+    },
+  ]
+}
+
+const getVisitActions = () => {
+  if (!authStore.isAdmin || !isAdminMode.value) return []
+  
+  return [
+    { 
+      label: 'Изменить заголовок', 
+      icon: 'fa-solid fa-heading',
+      onClick: editVisitTitle 
+    },
+    { 
+      label: 'Изменить описание', 
+      icon: 'fa-solid fa-align-left',
+      onClick: editVisitDescription 
+    },
+    { 
+      label: 'Удалить билеты', 
+      icon: 'fa-solid fa-trash',
+      variant: 'danger' as const,
+      onClick: enableVisitDeleteMode 
+    },
+  ]
+}
+
+// ==================== HERO HANDLERS ====================
+
 const editHero = () => {
   console.log('Редактировать Hero')
 }
@@ -132,7 +207,8 @@ const editHeroBackground = () => {
   console.log('Изменить фон Hero')
 }
 
-// Events handlers
+// ==================== EVENTS HANDLERS ====================
+
 const editEvents = () => {
   console.log('Редактировать Events')
 }
@@ -149,7 +225,8 @@ const enableEventsDeleteMode = () => {
   eventsRef.value?.enableDeleteMode()
 }
 
-// Gallery handlers
+// ==================== GALLERY HANDLERS ====================
+
 const editGallery = () => {
   console.log('Редактировать Gallery')
 }
@@ -166,7 +243,8 @@ const enableGalleryDeleteMode = () => {
   galleryRef.value?.enableDeleteMode()
 }
 
-// Visit handlers
+// ==================== VISIT HANDLERS ====================
+
 const editVisit = () => {
   console.log('Редактировать Visit')
 }
@@ -183,3 +261,12 @@ const enableVisitDeleteMode = () => {
   visitRef.value?.enableDeleteMode()
 }
 </script>
+
+<style>
+body {
+  margin: 0;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+</style>

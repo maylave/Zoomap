@@ -41,9 +41,9 @@
       />
     </div>
 
-    <!-- Блок предупреждения (только для админа) -->
+    <!-- ✅ Блок предупреждения (только для админа из store) -->
     <div
-      v-if="isAdmin"
+      v-if="authStore.isAdmin"
       class="group/warning absolute top-6 left-6 z-50 flex items-center justify-between rounded-2xl border border-warning/30 bg-warning/10 p-3 backdrop-blur-sm transition-all hover:border-warning/50 hover:bg-warning/15 max-w-sm"
     >
       <div class="flex items-center gap-3">
@@ -255,9 +255,10 @@ import AnimalModal from '@/components/overlay/AnimalModal.vue'
 import EditModal from '@/components/overlay/EditModal.vue'
 import AppIcon from '@/components/ui/BaseIcon.vue'
 import { computed, reactive, ref } from 'vue'
+import { useAuthStore } from '@/stores/auth'
 
-// Флаг администратора
-const isAdmin = ref(true)
+// ✅ Используем authStore вместо хардкода
+const authStore = useAuthStore()
 
 // State for Edit Modal
 const isEditModalOpen = ref(false)
@@ -281,6 +282,7 @@ const editFields = computed(() => [
   {
     key: 'badgeText',
     label: 'Бейдж статуса',
+    type: 'text' as const,
     value: badgeText.value,
     placeholder: 'Например: Открыто каждый день',
     hint: 'Текст в верхнем левом бейдже',
@@ -289,6 +291,7 @@ const editFields = computed(() => [
   {
     key: 'titleLine1',
     label: 'Заголовок (строка 1)',
+    type: 'text' as const,
     value: titleLine1.value,
     placeholder: 'Первая строка заголовка',
     required: true,
@@ -297,6 +300,7 @@ const editFields = computed(() => [
   {
     key: 'titleLine2',
     label: 'Заголовок (строка 2 - акцентная)',
+    type: 'text' as const,
     value: titleLine2.value,
     placeholder: 'Вторая строка заголовка (выделена цветом)',
     required: true,
@@ -305,6 +309,7 @@ const editFields = computed(() => [
   {
     key: 'titleLine3',
     label: 'Заголовок (строка 3)',
+    type: 'text' as const,
     value: titleLine3.value,
     placeholder: 'Третья строка заголовка',
     required: true,
@@ -313,7 +318,7 @@ const editFields = computed(() => [
   {
     key: 'description',
     label: 'Описание',
-    type: 'textarea',
+    type: 'textarea' as const,
     value: description.value,
     placeholder: 'Описание секции',
     rows: 4,
@@ -323,6 +328,7 @@ const editFields = computed(() => [
   {
     key: 'buttonText1',
     label: 'Текст первой кнопки',
+    type: 'text' as const,
     value: buttonText1.value,
     placeholder: 'Текст основной кнопки',
     icon: 'fa-solid fa-arrow-right',
@@ -330,6 +336,7 @@ const editFields = computed(() => [
   {
     key: 'buttonText2',
     label: 'Текст второй кнопки',
+    type: 'text' as const,
     value: buttonText2.value,
     placeholder: 'Текст вторичной кнопки',
     icon: 'fa-solid fa-arrow-right',
@@ -337,6 +344,7 @@ const editFields = computed(() => [
   {
     key: 'cardBadge',
     label: 'Бейдж на карточке',
+    type: 'text' as const,
     value: cardBadge.value,
     placeholder: 'Например: Звезда сезона',
     icon: 'fa-solid fa-star',
@@ -344,6 +352,7 @@ const editFields = computed(() => [
   {
     key: 'animalName',
     label: 'Имя животного',
+    type: 'text' as const,
     value: animalName.value,
     placeholder: 'Например: Симба',
     icon: 'fa-solid fa-paw',
@@ -351,6 +360,7 @@ const editFields = computed(() => [
   {
     key: 'animalInfo',
     label: 'Информация о животном',
+    type: 'text' as const,
     value: animalInfo.value,
     placeholder: 'Например: Африканский лев · Зона Саванна',
     hint: 'Описание под именем животного',
@@ -359,6 +369,7 @@ const editFields = computed(() => [
   {
     key: 'statsAnimals',
     label: 'Статистика: животные',
+    type: 'text' as const,
     value: statsAnimals.value,
     placeholder: 'Например: 3000+',
     icon: 'fa-solid fa-paw',
@@ -366,6 +377,7 @@ const editFields = computed(() => [
   {
     key: 'statsContinents',
     label: 'Статистика: континенты',
+    type: 'text' as const,
     value: statsContinents.value,
     placeholder: 'Например: 5',
     icon: 'fa-solid fa-globe',
@@ -452,26 +464,32 @@ const closeEditModal = () => {
 
 const handleEditSave = (values: Record<string, any>) => {
   // Update all reactive values
-  if (values.badgeText) badgeText.value = values.badgeText
-  if (values.titleLine1) titleLine1.value = values.titleLine1
-  if (values.titleLine2) titleLine2.value = values.titleLine2
-  if (values.titleLine3) titleLine3.value = values.titleLine3
-  if (values.description) description.value = values.description
-  if (values.buttonText1) buttonText1.value = values.buttonText1
-  if (values.buttonText2) buttonText2.value = values.buttonText2
-  if (values.cardBadge) cardBadge.value = values.cardBadge
-  if (values.animalName) animalName.value = values.animalName
-  if (values.animalInfo) animalInfo.value = values.animalInfo
-  if (values.statsAnimals) statsAnimals.value = values.statsAnimals
-  if (values.statsContinents) statsContinents.value = values.statsContinents
+  if (values.badgeText !== undefined) badgeText.value = values.badgeText
+  if (values.titleLine1 !== undefined) titleLine1.value = values.titleLine1
+  if (values.titleLine2 !== undefined) titleLine2.value = values.titleLine2
+  if (values.titleLine3 !== undefined) titleLine3.value = values.titleLine3
+  if (values.description !== undefined) description.value = values.description
+  if (values.buttonText1 !== undefined) buttonText1.value = values.buttonText1
+  if (values.buttonText2 !== undefined) buttonText2.value = values.buttonText2
+  if (values.cardBadge !== undefined) cardBadge.value = values.cardBadge
+  if (values.animalName !== undefined) animalName.value = values.animalName
+  if (values.animalInfo !== undefined) animalInfo.value = values.animalInfo
+  if (values.statsAnimals !== undefined) statsAnimals.value = values.statsAnimals
+  if (values.statsContinents !== undefined) statsContinents.value = values.statsContinents
 
   console.log('Сохранены изменения:', values)
-  // Here you can send data to backend
+  // TODO: Отправить данные на бэкенд
 }
 
-// Expose for parent component
+// ✅ Функция для переключения режима редактирования (вызывается из App.vue)
+const toggleEditMode = () => {
+  openEditModal()
+}
+
+// Expose для родительского компонента
 defineExpose({
   openEditModal,
+  toggleEditMode,
 })
 </script>
 

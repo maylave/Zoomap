@@ -15,12 +15,7 @@
           @click="$emit('close')"
         >
           <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M6 18L18 6M6 6l12 12"
-            />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
           </svg>
         </button>
 
@@ -32,66 +27,58 @@
 
         <!-- Body -->
         <div class="space-y-6 p-8">
-          <!-- Date Picker Trigger -->
+          <!-- Date Picker -->
           <div>
-            <label class="text-cream-100/80 mb-2 block text-sm font-medium"> Дата посещения </label>
+            <label class="text-cream-100/80 mb-2 block text-sm font-medium">Дата посещения</label>
             <div
               class="text-cream-100 hover:border-accent/30 flex cursor-pointer items-center gap-3 rounded-xl border border-white/10 bg-white/5 px-4 py-3 transition"
               @click="showDatePicker = true"
             >
-              <svg
-                class="text-accent h-5 w-5 shrink-0"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                />
+              <svg class="text-accent h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
               </svg>
               <span class="flex-1">{{ formattedDate }}</span>
-              <svg
-                class="text-cream-100/40 h-4 w-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M9 5l7 7-7 7"
-                />
-              </svg>
             </div>
           </div>
 
-          <!-- Time Slots -->
+          <!-- Time Slots из API -->
           <div>
-            <label class="text-cream-100/80 mb-2 block text-sm font-medium">
-              Время посещения
-            </label>
-            <div class="grid grid-cols-3 gap-2">
+            <label class="text-cream-100/80 mb-2 block text-sm font-medium">Время посещения</label>
+            
+            <!-- Loading -->
+            <div v-if="isLoadingSlots" class="grid grid-cols-3 gap-2">
+              <div
+                v-for="i in 6"
+                :key="i"
+                class="h-11 rounded-xl bg-white/5 animate-pulse"
+              ></div>
+            </div>
+
+            <!-- Слоты -->
+            <div v-else class="grid grid-cols-3 gap-2">
               <button
                 v-for="slot in timeSlots"
-                :key="slot.value"
+                :key="getTimeSlotKey(slot)"
                 class="rounded-xl border px-3 py-2.5 text-sm font-medium transition"
-                :class="
-                  selectedTime === slot.value
+                :class="[
+                  selectedTime === getTimeValue(slot)
                     ? 'border-accent bg-accent/20 text-accent'
-                    : 'text-cream-100/60 hover:text-cream-100 border-white/10 bg-white/5 hover:border-white/20'
-                "
-                @click="selectedTime = slot.value"
+                    : 'text-cream-100/60 hover:text-cream-100 border-white/10 bg-white/5 hover:border-white/20',
+                  slot.available === false ? 'opacity-40 cursor-not-allowed' : ''
+                ]"
+                :disabled="slot.available === false"
+                @click="selectTimeSlot(slot)"
               >
-                {{ slot.label }}
+                {{ getTimeLabel(slot) }}
               </button>
+
+              <p v-if="timeSlots.length === 0 && !isLoadingSlots" class="col-span-3 text-center text-cream-100/40 text-sm py-4">
+                Выберите дату, чтобы увидеть доступное время
+              </p>
             </div>
           </div>
 
-          <!-- Selected Tickets List -->
+          <!-- Выбранные билеты -->
           <div>
             <label class="text-cream-100/80 mb-2 block text-sm font-medium">
               Выбранные билеты
@@ -136,35 +123,40 @@
             </div>
           </div>
 
-          <!-- Add Ticket Type Button -->
+          <!-- Кнопка добавить билет -->
           <button
             class="border-accent/30 bg-accent/5 text-accent hover:bg-accent/10 flex w-full items-center justify-center gap-2 rounded-xl border border-dashed py-3 transition"
             @click="showTypeSelector = true"
           >
             <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M12 4v16m8-8H4"
-              />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
             </svg>
             Добавить тип билета
           </button>
 
-          <!-- Total -->
+          <!-- Итого -->
           <div class="flex items-center justify-between border-t border-white/10 pt-4">
             <span class="text-cream-100/60">Итого к оплате:</span>
             <span class="text-accent text-3xl font-bold">{{ totalPrice }} ₽</span>
           </div>
 
-          <!-- Submit Button -->
+          <!-- Кнопка оплаты -->
           <button
-            class="btn btn-accent w-full rounded-xl py-4 text-lg font-bold disabled:cursor-not-allowed disabled:opacity-50"
-            :disabled="selectedTickets.length === 0 || !selectedTime || !selectedDate"
+            class="btn btn-accent w-full rounded-xl py-4 text-lg font-bold disabled:cursor-not-allowed disabled:opacity-50 flex items-center justify-center gap-2"
+            :disabled="selectedTickets.length === 0 || !selectedTime || !selectedDate || isPurchasing"
             @click="handlePurchase"
           >
-            Перейти к оплате
+            <svg
+              v-if="isPurchasing"
+              class="animate-spin w-5 h-5"
+              fill="none"
+              viewBox="0 0 24 24"
+            >
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <span v-if="isPurchasing">Бронирование...</span>
+            <span v-else>Перейти к оплате</span>
           </button>
 
           <p class="text-cream-100/30 text-center text-xs">
@@ -175,7 +167,7 @@
     </div>
   </Transition>
 
-  <!-- Custom Date Picker Modal -->
+  <!-- Date Picker Modal -->
   <Transition name="fade">
     <div
       v-if="showDatePicker"
@@ -186,19 +178,13 @@
         class="bg-forest-900 relative w-full max-w-sm overflow-hidden rounded-3xl shadow-2xl ring-1 ring-white/10"
         @click.stop
       >
-        <!-- Month Navigation -->
         <div class="flex items-center justify-between border-b border-white/10 p-6">
           <button
             class="text-cream-100/60 hover:text-cream-100 rounded-full p-2 transition hover:bg-white/10"
             @click="prevMonth"
           >
             <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M15 19l-7-7 7-7"
-              />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
             </svg>
           </button>
           <span class="text-cream-100 text-lg font-bold capitalize">
@@ -209,17 +195,11 @@
             @click="nextMonth"
           >
             <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M9 5l7 7-7 7"
-              />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
             </svg>
           </button>
         </div>
 
-        <!-- Weekday Headers -->
         <div class="grid grid-cols-7 gap-1 px-6 pt-4">
           <div
             v-for="day in weekDays"
@@ -230,7 +210,6 @@
           </div>
         </div>
 
-        <!-- Calendar Days -->
         <div class="grid grid-cols-7 gap-1 p-6 pt-2">
           <div v-for="n in leadingEmptyDays" :key="'empty-' + n" class="aspect-square" />
           <button
@@ -245,7 +224,6 @@
           </button>
         </div>
 
-        <!-- Today Button -->
         <div class="border-t border-white/10 p-6">
           <button
             class="bg-accent/10 text-accent hover:bg-accent/20 w-full rounded-xl py-3 transition"
@@ -258,7 +236,7 @@
     </div>
   </Transition>
 
-  <!-- Ticket Type Selector Modal -->
+  <!-- Ticket Type Selector -->
   <Transition name="fade">
     <div
       v-if="showTypeSelector"
@@ -276,7 +254,7 @@
           <div class="space-y-3">
             <button
               v-for="ticket in availableTickets"
-              :key="ticket.name"
+              :key="ticket.id"
               class="hover:border-accent/30 w-full rounded-xl border border-white/10 bg-white/5 p-4 text-left transition hover:bg-white/10"
               @click="addTicket(ticket)"
             >
@@ -302,13 +280,32 @@
 
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
-import { Ticket, SelectedTicket } from '@/types/ticket'
+import { ticketsService } from '@/services/tickets.service'
+
+interface Ticket {
+  id: number
+  name: string
+  description?: string
+  price: number
+}
+
+interface SelectedTicket {
+  ticket: Ticket
+  count: number
+}
+
+interface TimeSlot {
+  time?: string
+  value?: string
+  label?: string
+  available?: boolean
+}
 
 const props = defineProps<{
   visible: boolean
   tickets?: Ticket[]
   defaultDate?: string
-  preselectedTicket?: Ticket | null // <-- Важно для автодобавления
+  preselectedTicket?: Ticket | null
 }>()
 
 const emit = defineEmits<{
@@ -316,34 +313,81 @@ const emit = defineEmits<{
   purchase: [data: { tickets: SelectedTicket[]; date: string; time: string }]
 }>()
 
-// Default tickets if not provided via props
-const defaultTickets: Ticket[] = [
-  { name: 'Взрослый', price: 890 },
-  { name: 'Детский', price: 490 },
-  { name: 'Пенсионный', price: 450 },
-  { name: 'Семейный', price: 2100 },
-]
-
-const tickets = computed(() => props.tickets ?? defaultTickets)
-
 const selectedTickets = ref<SelectedTicket[]>([])
 const showTypeSelector = ref(false)
 const showDatePicker = ref(false)
-const selectedTime = ref('')
+const selectedTime = ref<string>('')
+const timeSlots = ref<TimeSlot[]>([])
+const isLoadingSlots = ref(false)
+const isPurchasing = ref(false)
 
 // Date state
 const currentDate = ref(new Date())
 const selectedDate = ref<Date | null>(null)
 
-// Watch for visibility and preselected ticket to reset/add initial state
+// Watch для загрузки слотов при изменении даты
+watch(selectedDate, async (newDate) => {
+  if (newDate) {
+    await loadTimeSlots(newDate)
+  }
+})
+
+// Вспомогательные функции для работы со слотами
+function getTimeSlotKey(slot: TimeSlot): string {
+  return slot.time || slot.value || slot.label || ''
+}
+
+function getTimeValue(slot: TimeSlot): string {
+  return slot.time || slot.value || ''
+}
+
+function getTimeLabel(slot: TimeSlot): string {
+  return slot.time || slot.label || slot.value || ''
+}
+
+function selectTimeSlot(slot: TimeSlot) {
+  if (slot.available === false) return
+  
+  const time = getTimeValue(slot)
+  if (time) {
+    selectedTime.value = time
+  }
+}
+
+// Загрузка временных слотов из API
+async function loadTimeSlots(date: Date) {
+  isLoadingSlots.value = true
+  try {
+    const dateStr = date.toISOString().split('T')[0]
+    const slots = await ticketsService.getTimeSlots(dateStr)
+    timeSlots.value = slots
+  } catch (error) {
+    console.error('Ошибка загрузки слотов:', error)
+    // Fallback на статические слоты
+    timeSlots.value = [
+      { time: '09:00', available: true },
+      { time: '10:00', available: true },
+      { time: '11:00', available: true },
+      { time: '12:00', available: true },
+      { time: '13:00', available: true },
+      { time: '14:00', available: true },
+      { time: '15:00', available: true },
+      { time: '16:00', available: true },
+      { time: '17:00', available: true },
+    ]
+  } finally {
+    isLoadingSlots.value = false
+  }
+}
+
+// Watch для видимости
 watch(
   () => props.visible,
   (isVisible) => {
     if (isVisible) {
-      // Reset basic state
       selectedTime.value = ''
+      selectedTickets.value = []
 
-      // Set Date
       if (props.defaultDate) {
         const d = new Date(props.defaultDate)
         selectedDate.value = d
@@ -354,35 +398,22 @@ watch(
         currentDate.value = new Date(now.getFullYear(), now.getMonth(), 1)
       }
 
-      // Handle Preselected Ticket
-      selectedTickets.value = []
       if (props.preselectedTicket) {
         selectedTickets.value.push({
           ticket: props.preselectedTicket,
           count: 1,
         })
       }
+
+      // Загружаем слоты
+      if (selectedDate.value) {
+        loadTimeSlots(selectedDate.value)
+      }
     }
   }
 )
 
-// Time slots
-const timeSlots = [
-  { label: '09:00', value: '09:00' },
-  { label: '10:00', value: '10:00' },
-  { label: '11:00', value: '11:00' },
-  { label: '12:00', value: '12:00' },
-  { label: '13:00', value: '13:00' },
-  { label: '14:00', value: '14:00' },
-  { label: '15:00', value: '15:00' },
-  { label: '16:00', value: '16:00' },
-  { label: '17:00', value: '17:00' },
-  { label: '18:00', value: '18:00' },
-  { label: '19:00', value: '19:00' },
-  { label: '20:00', value: '20:00' },
-]
-
-// Calendar helpers
+// Calendar
 const weekDays = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс']
 
 const currentMonthName = computed(() => {
@@ -393,15 +424,11 @@ const currentYear = computed(() => currentDate.value.getFullYear())
 const currentMonth = computed(() => currentDate.value.getMonth())
 
 const daysInMonth = computed(() => {
-  const year = currentYear.value
-  const month = currentMonth.value
-  return new Date(year, month + 1, 0).getDate()
+  return new Date(currentYear.value, currentMonth.value + 1, 0).getDate()
 })
 
 const leadingEmptyDays = computed(() => {
-  const year = currentYear.value
-  const month = currentMonth.value
-  const firstDay = new Date(year, month, 1).getDay()
+  const firstDay = new Date(currentYear.value, currentMonth.value, 1).getDay()
   return firstDay === 0 ? 6 : firstDay - 1
 })
 
@@ -440,6 +467,7 @@ function getDayClass(day: number): string {
 function selectDate(day: number) {
   if (isDateDisabled(day)) return
   selectedDate.value = new Date(currentYear.value, currentMonth.value, day)
+  selectedTime.value = '' // Сброс времени
   showDatePicker.value = false
 }
 
@@ -447,6 +475,7 @@ function selectToday() {
   const now = new Date()
   selectedDate.value = new Date(now.getFullYear(), now.getMonth(), now.getDate())
   currentDate.value = new Date(now.getFullYear(), now.getMonth(), 1)
+  selectedTime.value = ''
   showDatePicker.value = false
 }
 
@@ -458,7 +487,6 @@ function nextMonth() {
   currentDate.value = new Date(currentYear.value, currentMonth.value + 1, 1)
 }
 
-// Formatted date display
 const formattedDate = computed(() => {
   if (!selectedDate.value) return 'Выберите дату'
   return selectedDate.value.toLocaleDateString('ru-RU', {
@@ -469,51 +497,53 @@ const formattedDate = computed(() => {
   })
 })
 
-// Available tickets (excluding already selected types to avoid duplicates in selector)
 const availableTickets = computed(() => {
-  const selectedNames = selectedTickets.value.map((item) => item.ticket.name)
-  return tickets.value.filter((ticket) => !selectedNames.includes(ticket.name))
+  const selectedIds = selectedTickets.value.map((item) => item.ticket.id)
+  return (props.tickets || []).filter((ticket) => !selectedIds.includes(ticket.id))
 })
 
-// Total price
 const totalPrice = computed(() => {
   return selectedTickets.value.reduce((sum, item) => {
     return sum + item.ticket.price * item.count
   }, 0)
 })
 
-// Add ticket
 function addTicket(ticket: Ticket) {
   selectedTickets.value.push({ ticket, count: 1 })
   showTypeSelector.value = false
 }
 
-// Remove ticket
 function removeTicket(index: number) {
   selectedTickets.value.splice(index, 1)
 }
 
-// Handle purchase
-function handlePurchase() {
-  if (selectedTickets.value.length === 0 || !selectedTime.value || !selectedDate.value) return
+async function handlePurchase() {
+  if (selectedTickets.value.length === 0 || !selectedTime.value || !selectedDate.value) {
+    return
+  }
 
-  emit('purchase', {
-    tickets: selectedTickets.value,
-    date: selectedDate.value.toISOString().split('T')[0],
-    time: selectedTime.value,
-  })
+  isPurchasing.value = true
+  try {
+    const dateStr = selectedDate.value.toISOString().split('T')[0]
+    
+    emit('purchase', {
+      tickets: selectedTickets.value,
+      date: dateStr,
+      time: selectedTime.value,
+    })
+  } finally {
+    // Сброс флага произойдёт после закрытия модалки
+    setTimeout(() => {
+      isPurchasing.value = false
+    }, 2000)
+  }
 }
 
-// Keyboard handler
 function handleKeydown(e: KeyboardEvent) {
   if (e.key === 'Escape') {
-    if (showDatePicker.value) {
-      showDatePicker.value = false
-    } else if (showTypeSelector.value) {
-      showTypeSelector.value = false
-    } else {
-      emit('close')
-    }
+    if (showDatePicker.value) showDatePicker.value = false
+    else if (showTypeSelector.value) showTypeSelector.value = false
+    else emit('close')
   }
 }
 
@@ -532,20 +562,6 @@ onUnmounted(() => window.removeEventListener('keydown', handleKeydown))
   opacity: 0;
 }
 
-.fade-enter-active .relative,
-.fade-leave-active .relative {
-  transition:
-    transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1),
-    opacity 0.3s ease;
-}
-
-.fade-enter-from .relative,
-.fade-leave-to .relative {
-  transform: scale(0.95) translateY(10px);
-  opacity: 0;
-}
-
-/* Scrollbar */
 .overflow-y-auto::-webkit-scrollbar {
   width: 6px;
 }
