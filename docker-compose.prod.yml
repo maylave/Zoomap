@@ -68,7 +68,7 @@ services:
     container_name: zoomap-certbot
     restart: unless-stopped
     volumes:
-      - ./nginx/ssl:/etc/letsencrypt
+      - certbot-conf:/etc/letsencrypt
       - certbot-www:/var/www/certbot
     entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
 
