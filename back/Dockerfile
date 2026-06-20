@@ -1,23 +1,5 @@
-# Build stage
-FROM node:20-alpine AS builder
-
-WORKDIR /app
-
-# Копируем package файлы
-COPY package*.json ./
-COPY tsconfig*.json ./
-
-# Устанавливаем зависимости
-RUN npm ci && npm cache clean --force
-
-# Копируем исходный код
-COPY . .
-
-# Собираем TypeScript
-RUN npm run build
-
 # Production stage
-FROM node:20-alpine AS production
+FROM node:20-alpine
 
 WORKDIR /app
 
@@ -25,10 +7,14 @@ WORKDIR /app
 RUN addgroup -g 1001 -S nodejs && \
     adduser -S nodejs -u 1001 -G nodejs
 
-# Копируем только необходимые файлы
-COPY --from=builder --chown=nodejs:nodejs /app/node_modules ./node_modules
-COPY --from=builder --chown=nodejs:nodejs /app/dist ./dist
-COPY --from=builder --chown=nodejs:nodejs /app/package*.json ./
+# Копируем package файлы
+COPY package*.json ./
+
+# Устанавливаем ВСЕ зависимости (включая dev для tsx)
+RUN npm ci && npm cache clean --force
+
+# Копируем исходный код
+COPY . .
 
 # Создаем директорию для uploads
 RUN mkdir -p uploads && chown -R nodejs:nodejs uploads
@@ -42,4 +28,5 @@ EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
     CMD node -e "require('http').get('http://localhost:3000/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"
 
-CMD ["node", "dist/index.js"]
+# Запускаем через tsx (работает с ES modules)
+CMD ["npx", "tsx", "src/index.ts"]
