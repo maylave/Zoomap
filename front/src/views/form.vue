@@ -474,11 +474,9 @@ const handleLogin = async () => {
     
     ElMessage.success('Добро пожаловать!')
     
-    if (response.user.role === 'admin' || response.user.role === 'dev') {
-      router.push('/admin/dashboard')
-    } else {
+    
       router.push('/')
-    }
+    
   } catch (error: any) {
     const errorMessage = error.response?.data?.error || 'Ошибка входа'
     serverError.value = errorMessage

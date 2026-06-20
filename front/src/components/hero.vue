@@ -156,7 +156,7 @@
         <div
           ref="cardRef"
           class="preserve-3d relative h-[500px] w-[360px] cursor-pointer transition-transform duration-100 ease-out"
-          :style="hero.cardStyle"
+          :style="hero.cardStyle.value"
           @mousemove.stop="hero.handleCardMouseMove"
           @mouseleave="hero.handleCardMouseLeave"
           @click="hero.openAnimalModal('lion')"
@@ -237,14 +237,14 @@
     </div>
 
     <!-- Modal Component для животных -->
-    <AnimalModal :visible="hero.isModalOpen" :animal-id="hero.selectedAnimalId" @close="hero.closeAnimalModal" />
+    <AnimalModal :visible="hero.isModalOpen.value" :animal-id="hero.selectedAnimalId.value" @close="hero.closeAnimalModal" />
 
     <!-- Universal Edit Modal -->
-    <EditModal
-      :visible="hero.isEditModalOpen"
+    <EditModal 
+      :visible="hero.isEditModalOpen.value"
       title="Редактирование Hero секции"
       subtitle="Измените текстовые элементы и параметры"
-      :fields="hero.editFields"
+      :fields="hero.editFields.value"
       @close="hero.closeEditModal"
       @save="hero.handleEditSave"
     />

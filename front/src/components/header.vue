@@ -41,13 +41,7 @@
         </template>
 
         <!-- Admin Badge -->
-        <span
-          v-if="authStore.isAdmin"
-          class="ml-2 inline-flex items-center gap-1 rounded-full bg-accent/20 border border-accent/40 px-2 py-0.5 text-[10px] font-bold text-accent uppercase tracking-wider align-middle"
-        >
-          <i class="fa-solid fa-shield-halved text-[8px]"></i>
-          Admin
-        </span>
+        
       </router-link>
 
       <!-- Desktop Menu -->
@@ -196,33 +190,7 @@
               <span>Профиль</span>
             </button>
 
-            <!-- Мои билеты -->
-            <button
-              class="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-white/80 transition-colors hover:text-lime-400 hover:bg-white/5"
-              @click="goToBookings"
-            >
-              <i class="fa-solid fa-ticket text-xs w-4"></i>
-              <span>Мои билеты</span>
-            </button>
-
-            <!-- Настройки -->
-            <button
-              class="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-white/80 transition-colors hover:text-lime-400 hover:bg-white/5"
-              @click="emit('openProfile')"
-            >
-              <i class="fa-solid fa-gear text-xs w-4"></i>
-              <span>Настройки</span>
-            </button>
-
-            <!-- Админка (только для админов) -->
-            <button
-              v-if="authStore.isAdmin"
-              class="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-white/80 transition-colors hover:text-accent hover:bg-white/5"
-              @click="goToAdmin"
-            >
-              <i class="fa-solid fa-shield-halved text-xs w-4"></i>
-              <span>Панель администратора</span>
-            </button>
+           
 
             <div class="my-1 h-px w-full bg-white/10"></div>
 
@@ -369,22 +337,8 @@
             Профиль
           </button>
 
-          <button
-            @click="goToBookings(); closeMenu()"
-            class="w-full rounded-xl border border-white/20 py-3 text-center text-cream-100/90 hover:border-lime-400/50 hover:bg-lime-400/5 hover:text-lime-400 transition-all"
-          >
-            <i class="fa-solid fa-ticket mr-2"></i>
-            Мои билеты
-          </button>
 
-          <button
-            v-if="authStore.isAdmin"
-            @click="goToAdmin(); closeMenu()"
-            class="w-full rounded-xl border border-accent/30 bg-accent/10 py-3 text-center text-accent hover:bg-accent/20 transition-all"
-          >
-            <i class="fa-solid fa-shield-halved mr-2"></i>
-            Панель администратора
-          </button>
+         
 
           <button
             @click="handleLogout"
@@ -513,9 +467,7 @@ const goToBookings = () => {
   emit('openProfile')
 }
 
-const goToAdmin = () => {
-  router.push('/admin/dashboard')
-}
+
 
 // ==================== AUTH ====================
 

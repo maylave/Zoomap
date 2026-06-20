@@ -1,24 +1,59 @@
 // composables/useHero.ts
-import { computed, reactive, ref } from 'vue'
+import { computed, reactive, ref, type Ref, type ComputedRef } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 
-export const useHero = () => {
+// Для удобства обучения студентам можно вынести интерфейс — сразу видно, что отдаём наружу
+interface HeroReturn {
+  isEditModalOpen: Ref<boolean>
+  isModalOpen: Ref<boolean>
+  selectedAnimalId: Ref<string | null>
+  heroRef: Ref<HTMLElement | null>
+  cardRef: Ref<HTMLElement | null>
+  cursor: { x: number; y: number }
+  satellite1: { x: number; y: number }
+  satellite2: { x: number; y: number }
+  rotate: { x: number; y: number }
+  cardMouse: { x: number; y: number }
+  cardStyle: ComputedRef<{ transform: string }>
+  badgeText: Ref<string>
+  titleLine1: Ref<string>
+  titleLine2: Ref<string>
+  titleLine3: Ref<string>
+  description: Ref<string>
+  buttonText1: Ref<string>
+  buttonText2: Ref<string>
+  cardBadge: Ref<string>
+  animalName: Ref<string>
+  animalInfo: Ref<string>
+  statsAnimals: Ref<string>
+  statsContinents: Ref<string>
+  editFields: ComputedRef<any[]>
+  handleEditSave: (values: Record<string, any>) => void
+  handleGlobalMouseMove: (e: MouseEvent) => void
+  handleCardMouseMove: (e: MouseEvent) => void
+  handleCardMouseLeave: () => void
+  openAnimalModal: (id: string) => void
+  closeAnimalModal: () => void
+  goToMap: () => void
+  openEditModal: () => void
+  closeEditModal: () => void
+  toggleEditMode: () => void
+}
+
+export const useHero = (): HeroReturn => {
   const authStore = useAuthStore()
   const router = useRouter()
 
-  // State for Edit Modal
   const isEditModalOpen = ref(false)
   const isModalOpen = ref(false)
   const selectedAnimalId = ref<string | null>(null)
 
-  // State for Global Cursor Glow
   const heroRef = ref<HTMLElement | null>(null)
   const cursor = reactive({ x: 0, y: 0 })
   const satellite1 = reactive({ x: 0, y: 0 })
   const satellite2 = reactive({ x: 0, y: 0 })
 
-  // Публичные реактивные данные
   const badgeText = ref('Открыто каждый день')
   const titleLine1 = ref('Мир дикой')
   const titleLine2 = ref('природы')
@@ -33,6 +68,32 @@ export const useHero = () => {
   const animalInfo = ref('Африканский лев · Зона Саванна')
   const statsAnimals = ref('3000+')
   const statsContinents = ref('5')
+
+  // ✅ Вычисляемое поле editFields — обязательно вернуть
+  const editFields = computed(() => [
+    { key: 'badgeText', label: 'Бейдж статуса', type: 'text' as const, value: badgeText },
+    { key: 'titleLine1', label: 'Заголовок (строка 1)', type: 'text' as const, value: titleLine1 },
+    { key: 'titleLine2', label: 'Заголовок (строка 2)', type: 'text' as const, value: titleLine2 },
+    { key: 'titleLine3', label: 'Заголовок (строка 3)', type: 'text' as const, value: titleLine3 },
+    { key: 'description', label: 'Описание', type: 'textarea' as const, value: description },
+    { key: 'buttonText1', label: 'Текст первой кнопки', type: 'text' as const, value: buttonText1 },
+    { key: 'buttonText2', label: 'Текст второй кнопки', type: 'text' as const, value: buttonText2 },
+    { key: 'cardBadge', label: 'Бейдж на карточке', type: 'text' as const, value: cardBadge },
+    { key: 'animalName', label: 'Имя животного', type: 'text' as const, value: animalName },
+    { key: 'animalInfo', label: 'Информация о животном', type: 'text' as const, value: animalInfo },
+    {
+      key: 'statsAnimals',
+      label: 'Статистика: животные',
+      type: 'text' as const,
+      value: statsAnimals,
+    },
+    {
+      key: 'statsContinents',
+      label: 'Статистика: континенты',
+      type: 'text' as const,
+      value: statsContinents,
+    },
+  ])
 
   const handleEditSave = (values: Record<string, any>) => {
     if (values.badgeText !== undefined) badgeText.value = values.badgeText
@@ -49,7 +110,6 @@ export const useHero = () => {
     if (values.statsContinents !== undefined) statsContinents.value = values.statsContinents
 
     console.log('Сохранены изменения:', values)
-    // TODO: отправить данные на бэкенд
   }
 
   const handleGlobalMouseMove = (e: MouseEvent) => {
@@ -66,7 +126,6 @@ export const useHero = () => {
     satellite2.y = y + 70
   }
 
-  // State for Card Parallax & Internal Glow
   const cardRef = ref<HTMLElement | null>(null)
   const cardMouse = reactive({ x: 0, y: 0 })
   const rotate = reactive({ x: 0, y: 0 })
@@ -93,7 +152,6 @@ export const useHero = () => {
     transform: `rotateY(${rotate.y}deg) rotateX(${rotate.x}deg)`,
   }))
 
-  // Modal Logic
   const openAnimalModal = (id: string) => {
     selectedAnimalId.value = id
     isModalOpen.value = true
@@ -110,7 +168,6 @@ export const useHero = () => {
     router.push('/zones')
   }
 
-  // Edit Modal Logic
   const openEditModal = () => {
     isEditModalOpen.value = true
   }
@@ -124,16 +181,17 @@ export const useHero = () => {
   }
 
   return {
-    // Состояние (если родителю нужно читать)
+    // ✅ Обязательно: всё, что используется в шаблоне
     isEditModalOpen,
     isModalOpen,
     selectedAnimalId,
     heroRef,
     cardRef,
     cursor,
-    satellite1, // ✅ Добавлено
-    satellite2, // ✅ Добавлено
+    satellite1,
+    satellite2,
     rotate,
+    cardMouse,
     cardStyle,
     badgeText,
     titleLine1,
@@ -147,8 +205,8 @@ export const useHero = () => {
     animalInfo,
     statsAnimals,
     statsContinents,
+    editFields, // ✅ Добавлено
 
-    // Методы
     handleEditSave,
     handleGlobalMouseMove,
     handleCardMouseMove,
