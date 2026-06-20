@@ -14,7 +14,11 @@ import animalRoutes from "./routes/animal.routes.js";
 import eventRoutes from "./routes/event.routes.js";
 import subscriptionRoutes from "./routes/subscription.routes.js";
 import galleryRoutes from "./routes/gallery.routes.js";
-
+import zoneRoutes from "./routes/zone.routes.js";
+import userRouters from "./routes/userAdmin.routes.js";
+import tickerRoutes from "./routes/ticker.routes.js";
+import adminPromocodesRoutes from "./routes/adminPromocodes.routes.js";
+import promocodesRoutes from "./routes/promocodes.routes.js";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -39,15 +43,18 @@ app.use("/auth", authRoutes);
 app.use("/animals", animalRoutes);
 app.use("/events", eventRoutes);
 app.use("/tickets", ticketRoutes);
-app.use("/gallery", galleryRoutes); // ✅ ИСПРАВЛЕНО!
-
+app.use("/gallery", galleryRoutes);
+app.use("/zones", zoneRoutes);
+app.use("/ticker", tickerRoutes);
+app.use("/promocodes", promocodesRoutes); // ✅ Добавьте ЭТУ строку
 // Защищённые роуты (требуют авторизации)
 app.use("/profile", profileRoutes);
 app.use("/subscription", subscriptionRoutes);
 
 // Админ роуты (требуют прав админа)
 app.use("/admin", adminRoutes);
-
+app.use("/admin/promocodes", adminPromocodesRoutes);
+app.use("/admin/users", userRouters);
 // Root
 app.get("/", (req, res) => {
   res.json({

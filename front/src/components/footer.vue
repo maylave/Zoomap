@@ -81,7 +81,7 @@
       <div
         class="text-cream-100/40 mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 text-xs md:flex-row"
       >
-        <p>© {{ new Date().getFullYear() }} ZooVerse Park. Все права защищены.</p>
+
         <div class="flex gap-6">
           <a href="#" class="hover:text-lime transition-colors">Политика конфиденциальности</a>
           <a href="#" class="hover:text-lime transition-colors">Правила посещения</a>

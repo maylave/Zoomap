@@ -13,6 +13,7 @@
         <div
           ref="modalRef"
           class="relative w-full max-w-2xl overflow-hidden rounded-3xl border border-white/10 bg-forest-400 p-8 shadow-2xl"
+          :class="{ 'max-w-3xl': hasIconPicker }"
           @click.stop
           role="dialog"
           aria-modal="true"
@@ -46,7 +47,7 @@
           <div class="max-h-[60vh] space-y-5 overflow-y-auto pr-2 custom-scrollbar">
             <div v-for="field in fields" :key="field.key">
               <label
-                v-if="field.label && field.type !== 'checkbox'"
+                v-if="field.label && field.type !== 'checkbox' && field.type !== 'icon-picker'"
                 :for="field.key"
                 class="mb-2 block text-sm font-medium text-cream-100/80"
               >
@@ -152,10 +153,99 @@
                   class="w-full h-14 rounded-2xl border border-white/10 bg-white/5 cursor-pointer"
                   @input="handleInput(field.key, $event)"
                 />
+
+                <!-- ==================== ICON PICKER ==================== -->
+                <div
+                  v-else-if="field.type === 'icon-picker'"
+                  class="rounded-2xl border border-white/10 bg-white/5 p-4"
+                  :class="{ 'border-terracotta/50': errors[field.key] }"
+                >
+                  <!-- Label для icon-picker -->
+                  <div class="mb-3 flex items-center justify-between">
+                    <label class="text-sm font-medium text-cream-100/80">
+                      {{ field.label }}
+                      <span v-if="field.required" class="ml-1 text-lime">*</span>
+                    </label>
+                    <button
+                      v-if="localValues[field.key]"
+                      @click="handleInput(field.key, { target: { value: '' } })"
+                      class="flex items-center gap-1.5 rounded-lg px-2 py-1 text-xs text-terracotta hover:bg-terracotta/10 transition"
+                    >
+                      <i class="fa-solid fa-xmark text-xs"></i>
+                      Сбросить
+                    </button>
+                  </div>
+
+                  <!-- Предпросмотр выбранной иконки -->
+                  <div v-if="localValues[field.key]" class="mb-3 flex items-center gap-3 rounded-xl border border-lime/30 bg-lime/5 p-3">
+                    <div class="flex h-12 w-12 items-center justify-center rounded-lg bg-lime/20 text-lime">
+                      <i :class="localValues[field.key]" class="text-2xl"></i>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                      <p class="text-sm font-medium text-cream-100 truncate">{{ localValues[field.key] }}</p>
+                      <p class="text-xs text-cream-100/60">Выбранная иконка</p>
+                    </div>
+                  </div>
+
+                  <!-- Поиск иконок -->
+                  <div class="relative mb-3">
+                    <input
+                      v-model="iconSearch[field.key]"
+                      type="text"
+                      placeholder="Поиск иконок..."
+                      class="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 pl-10 text-cream-100 placeholder:text-cream-100/30 outline-none transition-all duration-200 focus:border-lime/50 focus:bg-white/10"
+                    />
+                    <i class="fa-solid fa-search absolute left-3 top-1/2 -translate-y-1/2 text-cream-100/40"></i>
+                    <span v-if="iconSearch[field.key]" class="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-cream-100/40">
+                      {{ getFilteredIcons(field.key).length }} найдено
+                    </span>
+                  </div>
+
+                  <!-- Категории (быстрые фильтры) -->
+                  <div class="mb-3 flex flex-wrap gap-1.5">
+                    <button
+                      v-for="cat in iconCategories"
+                      :key="cat.name"
+                      @click="iconSearch[field.key] = cat.search"
+                      class="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-xs text-cream-100/60 transition hover:border-lime/40 hover:bg-lime/10 hover:text-lime"
+                    >
+                      <i :class="cat.icon" class="mr-1"></i>
+                      {{ cat.name }}
+                    </button>
+                  </div>
+
+                  <!-- Сетка иконок -->
+                  <div class="max-h-56 overflow-y-auto rounded-xl border border-white/10 bg-forest-400/50 p-3 icon-picker-scroll">
+                    <div class="grid grid-cols-8 sm:grid-cols-10 gap-1.5">
+                      <button
+                        v-for="icon in getFilteredIcons(field.key)"
+                        :key="icon"
+                        @click="handleInput(field.key, { target: { value: icon } })"
+                        class="flex aspect-square items-center justify-center rounded-lg border border-white/5 bg-white/5 text-cream-100/50 transition-all hover:border-lime/40 hover:bg-lime/10 hover:text-lime hover:scale-110 active:scale-95"
+                        :class="{
+                          'border-lime/50 bg-lime/20 text-lime shadow-[0_0_12px_rgba(168,201,107,0.3)]': localValues[field.key] === icon
+                        }"
+                        :title="icon"
+                      >
+                        <i :class="icon" class="text-base"></i>
+                      </button>
+                    </div>
+
+                    <div v-if="getFilteredIcons(field.key).length === 0" class="py-8 text-center">
+                      <i class="fa-solid fa-face-frown text-3xl text-cream-100/20 mb-2"></i>
+                      <p class="text-sm text-cream-100/40">Иконки не найдены</p>
+                    </div>
+                  </div>
+
+                  <!-- Подсказка -->
+                  <p v-if="field.hint" class="mt-2 text-xs text-cream-100/40">
+                    {{ field.hint }}
+                  </p>
+                </div>
               </div>
 
-              <!-- Hint -->
-              <p v-if="field.hint && !errors[field.key]" class="mt-1.5 text-xs text-cream-100/40">
+              <!-- Hint (для обычных полей) -->
+              <p v-if="field.hint && field.type !== 'icon-picker' && !errors[field.key]" class="mt-1.5 text-xs text-cream-100/40">
                 {{ field.hint }}
               </p>
 
@@ -228,7 +318,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, watch, onMounted, onUnmounted, nextTick } from 'vue'
+import { ref, reactive, watch, computed, onMounted, onUnmounted, nextTick } from 'vue'
 
 // ==================== TYPES ====================
 
@@ -240,25 +330,20 @@ interface SelectOption {
 interface EditField {
   key: string
   label?: string
-  type?: 'text' | 'textarea' | 'number' | 'email' | 'url' | 'password' | 'select' | 'checkbox' | 'date' | 'color'
+  type?: 'text' | 'textarea' | 'number' | 'email' | 'url' | 'password' | 'select' | 'checkbox' | 'date' | 'color' | 'icon-picker'
   value: string | number | boolean
   placeholder?: string
   required?: boolean
   hint?: string
   icon?: string
   rows?: number
-  // Для number
   min?: number
   max?: number
   step?: number
-  // Для date
   minDate?: string
   maxDate?: string
-  // Для select
   options?: SelectOption[]
-  // Для checkbox
   checkboxLabel?: string
-  // Кастомная валидация
   validate?: (value: any) => string | null
 }
 
@@ -284,9 +369,144 @@ const modalRef = ref<HTMLElement | null>(null)
 const isSaving = ref(false)
 const errors = reactive<Record<string, string>>({})
 const generalError = ref<string | null>(null)
-
-// Локальные значения (копия props.fields, чтобы не мутировать)
 const localValues = reactive<Record<string, any>>({})
+
+// Icon Picker state
+const iconSearch = reactive<Record<string, string>>({})
+
+// ==================== ICONS DATABASE ====================
+
+const iconCategories = [
+  { name: 'Все', search: '', icon: 'fa-solid fa-grip' },
+  { name: 'Животные', search: 'paw', icon: 'fa-solid fa-paw' },
+  { name: 'Природа', search: 'leaf', icon: 'fa-solid fa-leaf' },
+  { name: 'Погода', search: 'sun', icon: 'fa-solid fa-sun' },
+  { name: 'Время', search: 'clock', icon: 'fa-solid fa-clock' },
+  { name: 'Еда', search: 'apple', icon: 'fa-solid fa-apple-whole' },
+  { name: 'Действия', search: 'person', icon: 'fa-solid fa-person' },
+  { name: 'Навигация', search: 'map', icon: 'fa-solid fa-map' },
+  { name: 'Инфо', search: 'circle', icon: 'fa-solid fa-circle-info' },
+  { name: 'Зоопарк', search: 'building', icon: 'fa-solid fa-building' },
+  { name: 'Развлечения', search: 'camera', icon: 'fa-solid fa-camera' },
+  { name: 'Покупки', search: 'cart', icon: 'fa-solid fa-cart-shopping' },
+  { name: 'Транспорт', search: 'car', icon: 'fa-solid fa-car' },
+  { name: 'Безопасность', search: 'shield', icon: 'fa-solid fa-shield' },
+]
+
+const allIcons = [
+  // Животные
+  'fa-solid fa-paw', 'fa-solid fa-dog', 'fa-solid fa-cat', 'fa-solid fa-crow',
+  'fa-solid fa-spider', 'fa-solid fa-fish', 'fa-solid fa-fish-fins', 'fa-solid fa-horse',
+  'fa-solid fa-cow', 'fa-solid fa-sheep', 'fa-solid fa-piggy-bank', 'fa-solid fa-dove',
+  'fa-solid fa-otter', 'fa-solid fa-frog', 'fa-solid fa-bug', 'fa-solid fa-dragon',
+  'fa-solid fa-kiwi-bird', 'fa-solid fa-hippo', 'fa-solid fa-elephant', 'fa-solid fa-monkey',
+  
+  // Природа
+  'fa-solid fa-leaf', 'fa-solid fa-tree', 'fa-solid fa-seedling', 'fa-solid fa-mountain',
+  'fa-solid fa-mountain-sun', 'fa-solid fa-water', 'fa-solid fa-fire', 'fa-solid fa-wind',
+  'fa-solid fa-earth-americas', 'fa-solid fa-earth-europe', 'fa-solid fa-earth-africa',
+  'fa-solid fa-earth-asia', 'fa-solid fa-volcano', 'fa-solid fa-meteor',
+  
+  // Погода
+  'fa-solid fa-sun', 'fa-solid fa-moon', 'fa-solid fa-cloud', 'fa-solid fa-cloud-sun',
+  'fa-solid fa-cloud-rain', 'fa-solid fa-cloud-showers-heavy', 'fa-solid fa-snowflake',
+  'fa-solid fa-smog', 'fa-solid fa-temperature-high', 'fa-solid fa-temperature-low',
+  'fa-solid fa-temperature-half', 'fa-solid fa-umbrella', 'fa-solid fa-rainbow',
+  'fa-solid fa-cloud-bolt', 'fa-solid fa-cloud-meatball',
+  
+  // Время
+  'fa-solid fa-clock', 'fa-solid fa-calendar', 'fa-solid fa-calendar-days',
+  'fa-solid fa-calendar-week', 'fa-solid fa-hourglass-start', 'fa-solid fa-hourglass-half',
+  'fa-solid fa-hourglass-end', 'fa-solid fa-stopwatch', 'fa-solid fa-timer',
+  'fa-solid fa-alarm-clock', 'fa-solid fa-bell', 'fa-solid fa-bell-slash',
+  
+  // Еда
+  'fa-solid fa-apple-whole', 'fa-solid fa-carrot', 'fa-solid fa-bread-slice',
+  'fa-solid fa-cheese', 'fa-solid fa-drumstick-bite', 'fa-solid fa-egg',
+  'fa-solid fa-pepper-hot', 'fa-solid fa-lemon', 'fa-solid fa-cookie',
+  'fa-solid fa-cake-candles', 'fa-solid fa-ice-cream', 'fa-solid fa-mug-hot',
+  'fa-solid fa-martini-glass', 'fa-solid fa-wine-glass',
+  
+  // Действия
+  'fa-solid fa-person', 'fa-solid fa-person-walking', 'fa-solid fa-person-running',
+  'fa-solid fa-person-swimming', 'fa-solid fa-person-biking', 'fa-solid fa-person-hiking',
+  'fa-solid fa-person-skiing', 'fa-solid fa-person-snowboarding', 'fa-solid fa-people-group',
+  'fa-solid fa-child', 'fa-solid fa-child-reaching', 'fa-solid fa-baby',
+  'fa-solid fa-user', 'fa-solid fa-users', 'fa-solid fa-user-group',
+  
+  // Навигация
+  'fa-solid fa-location-dot', 'fa-solid fa-map', 'fa-solid fa-map-pin',
+  'fa-solid fa-map-location-dot', 'fa-solid fa-route', 'fa-solid fa-signs-post',
+  'fa-solid fa-compass', 'fa-solid fa-globe', 'fa-solid fa-crosshairs',
+  'fa-solid fa-location-crosshairs', 'fa-solid fa-street-view',
+  
+  // Информация
+  'fa-solid fa-circle-info', 'fa-solid fa-circle-question', 'fa-solid fa-circle-exclamation',
+  'fa-solid fa-circle-check', 'fa-solid fa-circle-xmark', 'fa-solid fa-star',
+  'fa-solid fa-star-half-stroke', 'fa-solid fa-heart', 'fa-solid fa-bookmark',
+  'fa-solid fa-tag', 'fa-solid fa-tags', 'fa-solid fa-ticket', 'fa-solid fa-award',
+  'fa-solid fa-trophy', 'fa-solid fa-medal', 'fa-solid fa-crown',
+  
+  // Зоопарк / Здания
+  'fa-solid fa-house', 'fa-solid fa-house-chimney', 'fa-solid fa-building',
+  'fa-solid fa-building-columns', 'fa-solid fa-hotel', 'fa-solid fa-store',
+  'fa-solid fa-warehouse', 'fa-solid fa-industry', 'fa-solid fa-school',
+  'fa-solid fa-hospital', 'fa-solid fa-church', 'fa-solid fa-mosque',
+  'fa-solid fa-place-of-worship', 'fa-solid fa-monument', 'fa-solid fa-campground',
+  
+  // Развлечения
+  'fa-solid fa-camera', 'fa-solid fa-camera-retro', 'fa-solid fa-video',
+  'fa-solid fa-music', 'fa-solid fa-film', 'fa-solid fa-gamepad', 'fa-solid fa-puzzle-piece',
+  'fa-solid fa-gift', 'fa-solid fa-balloons', 'fa-solid fa-wand-magic-sparkles',
+  'fa-solid fa-palette', 'fa-solid fa-masks-theater', 'fa-solid fa-photo-film',
+  
+  // Покупки
+  'fa-solid fa-cart-shopping', 'fa-solid fa-basket-shopping', 'fa-solid fa-bag-shopping',
+  'fa-solid fa-credit-card', 'fa-solid fa-money-bill', 'fa-solid fa-money-bill-wave',
+  'fa-solid fa-money-check-dollar', 'fa-solid fa-receipt', 'fa-solid fa-percent',
+  'fa-solid fa-sack-dollar', 'fa-solid fa-wallet', 'fa-solid fa-coins',
+  
+  // Транспорт
+  'fa-solid fa-car', 'fa-solid fa-car-side', 'fa-solid fa-bus', 'fa-solid fa-bus-simple',
+  'fa-solid fa-train', 'fa-solid fa-train-subway', 'fa-solid fa-plane',
+  'fa-solid fa-plane-departure', 'fa-solid fa-ship', 'fa-solid fa-bicycle',
+  'fa-solid fa-motorcycle', 'fa-solid fa-truck', 'fa-solid fa-helicopter',
+  'fa-solid fa-sailboat', 'fa-solid fa-tractor',
+  
+  // Безопасность
+  'fa-solid fa-shield', 'fa-solid fa-shield-halved', 'fa-solid fa-shield-heart',
+  'fa-solid fa-lock', 'fa-solid fa-lock-open', 'fa-solid fa-key', 'fa-solid fa-user-lock',
+  'fa-solid fa-user-shield', 'fa-solid fa-user-secret', 'fa-solid fa-eye',
+  'fa-solid fa-eye-slash', 'fa-solid fa-fingerprint',
+  
+  // Прочее
+  'fa-solid fa-bolt', 'fa-solid fa-flame', 'fa-solid fa-droplet', 'fa-solid fa-spray-can',
+  'fa-solid fa-soap', 'fa-solid fa-hand', 'fa-solid fa-hands', 'fa-solid fa-brain',
+  'fa-solid fa-lungs', 'fa-solid fa-bone', 'fa-solid fa-tooth', 'fa-solid fa-magnet',
+  'fa-solid fa-recycle', 'fa-solid fa-trash', 'fa-solid fa-trash-can',
+  'fa-solid fa-gear', 'fa-solid fa-gears', 'fa-solid fa-wrench', 'fa-solid fa-screwdriver-wrench',
+  'fa-solid fa-toolbox', 'fa-solid fa-lightbulb', 'fa-solid fa-battery-full',
+  'fa-solid fa-plug', 'fa-solid fa-wifi', 'fa-solid fa-signal', 'fa-solid fa-bluetooth',
+  'fa-solid fa-qrcode', 'fa-solid fa-barcode', 'fa-solid fa-print',
+  'fa-solid fa-download', 'fa-solid fa-upload', 'fa-solid fa-share-nodes',
+  'fa-solid fa-link', 'fa-solid fa-paperclip', 'fa-solid fa-scissors',
+]
+
+// ==================== COMPUTED ====================
+
+const hasIconPicker = computed(() => 
+  props.fields.some(f => f.type === 'icon-picker')
+)
+
+const getFilteredIcons = (fieldKey: string) => {
+  const search = (iconSearch[fieldKey] || '').toLowerCase().trim()
+  if (!search) {
+    return allIcons.slice(0, 80)
+  }
+  return allIcons.filter(icon => 
+    icon.toLowerCase().includes(search)
+  )
+}
 
 // ==================== WATCHERS ====================
 
@@ -294,22 +514,21 @@ watch(
   () => props.visible,
   async (newVal) => {
     if (newVal) {
-      // Сброс ошибок
       Object.keys(errors).forEach(key => delete errors[key])
       generalError.value = null
       
-      // Копируем значения из props
       props.fields.forEach(field => {
         localValues[field.key] = field.value
+        if (field.type === 'icon-picker') {
+          iconSearch[field.key] = ''
+        }
       })
       
-      // Блокируем скролл
       document.body.style.overflow = 'hidden'
       
-      // ✅ Auto-focus на первом поле
       await nextTick()
       const firstInput = modalRef.value?.querySelector(
-        'input:not([disabled]), textarea:not([disabled]), select:not([disabled])'
+        'input:not([disabled]):not([type="checkbox"]), textarea:not([disabled]), select:not([disabled])'
       ) as HTMLElement
       firstInput?.focus()
     } else {
@@ -324,7 +543,6 @@ watch(
 const handleKeydown = (e: KeyboardEvent) => {
   if (!props.visible) return
   
-  // ESC — закрыть модалку
   if (e.key === 'Escape') {
     if (!isSaving.value) {
       handleClose()
@@ -332,7 +550,6 @@ const handleKeydown = (e: KeyboardEvent) => {
     return
   }
   
-  // Tab — focus trap
   if (e.key === 'Tab' && modalRef.value) {
     const focusableElements = modalRef.value.querySelectorAll(
       'input:not([disabled]), textarea:not([disabled]), select:not([disabled]), button:not([disabled]), [tabindex]:not([tabindex="-1"])'
@@ -371,7 +588,6 @@ onUnmounted(() => {
 // ==================== VALIDATION ====================
 
 const validateField = (field: EditField, value: any): string | null => {
-  // Required
   if (field.required) {
     if (value === undefined || value === null || value === '') {
       return 'Обязательное поле'
@@ -381,7 +597,6 @@ const validateField = (field: EditField, value: any): string | null => {
     }
   }
 
-  // Email
   if (field.type === 'email' && value && String(value).trim()) {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     if (!emailRegex.test(String(value))) {
@@ -389,7 +604,6 @@ const validateField = (field: EditField, value: any): string | null => {
     }
   }
 
-  // URL
   if (field.type === 'url' && value && String(value).trim()) {
     try {
       new URL(String(value))
@@ -398,7 +612,6 @@ const validateField = (field: EditField, value: any): string | null => {
     }
   }
 
-  // Number range
   if (field.type === 'number' && value !== '' && value !== undefined) {
     const num = Number(value)
     if (isNaN(num)) {
@@ -412,7 +625,6 @@ const validateField = (field: EditField, value: any): string | null => {
     }
   }
 
-  // Кастомная валидация
   if (field.validate) {
     return field.validate(value)
   }
@@ -423,7 +635,6 @@ const validateField = (field: EditField, value: any): string | null => {
 const validateAll = (): boolean => {
   let isValid = true
   
-  // Очищаем ошибки
   Object.keys(errors).forEach(key => delete errors[key])
   
   for (const field of props.fields) {
@@ -439,30 +650,30 @@ const validateAll = (): boolean => {
 
 // ==================== HANDLERS ====================
 
-const handleInput = (key: string, event: Event) => {
-  const target = event.target as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
-  
-  if (!target) return
-  
-  // Определяем тип значения
+const handleInput = (key: string, event: Event | any) => {
   let value: any
-  if (target instanceof HTMLInputElement && target.type === 'checkbox') {
-    value = target.checked
-  } else if (target instanceof HTMLInputElement && target.type === 'number') {
-    value = target.value === '' ? '' : Number(target.value)
+  
+  if (event && event.target) {
+    const target = event.target as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    
+    if (target instanceof HTMLInputElement && target.type === 'checkbox') {
+      value = target.checked
+    } else if (target instanceof HTMLInputElement && target.type === 'number') {
+      value = target.value === '' ? '' : Number(target.value)
+    } else {
+      value = target.value
+    }
   } else {
-    value = target.value
+    value = event
   }
   
   localValues[key] = value
   
-  // Убираем ошибку при вводе
   if (errors[key]) {
     delete errors[key]
   }
 }
 
-// ✅ Live validation при blur
 const handleBlur = (key: string) => {
   const field = props.fields.find(f => f.key === key)
   if (!field) return
@@ -475,7 +686,6 @@ const handleBlur = (key: string) => {
   }
 }
 
-// ✅ Auto-resize textarea
 const autoResizeTextarea = (event: Event) => {
   const target = event.target as HTMLTextAreaElement
   if (!target) return
@@ -490,11 +700,9 @@ const handleClose = () => {
 }
 
 const handleSave = async () => {
-  // Валидация
   if (!validateAll()) {
     generalError.value = 'Пожалуйста, исправьте ошибки в форме'
     
-    // ✅ Скроллим к первой ошибке
     await nextTick()
     const firstErrorField = Object.keys(errors)[0]
     if (firstErrorField) {
@@ -509,7 +717,6 @@ const handleSave = async () => {
   generalError.value = null
   
   try {
-    // Вызываем save (может быть async)
     await emit('save', { ...localValues })
   } catch (error: any) {
     console.error('Save error:', error)
@@ -547,6 +754,25 @@ defineExpose({
   background: rgba(168, 201, 107, 0.5);
 }
 
+/* Скроллбар для icon picker */
+.icon-picker-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+
+.icon-picker-scroll::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 3px;
+}
+
+.icon-picker-scroll::-webkit-scrollbar-thumb {
+  background: rgba(168, 201, 107, 0.2);
+  border-radius: 3px;
+}
+
+.icon-picker-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(168, 201, 107, 0.4);
+}
+
 /* Анимация модалки */
 .modal-fade-enter-active,
 .modal-fade-leave-active {
@@ -569,7 +795,7 @@ defineExpose({
   opacity: 0;
 }
 
-/* ✅ Анимация ошибок */
+/* Анимация ошибок */
 .error-fade-enter-active,
 .error-fade-leave-active {
   transition: all 0.2s ease;

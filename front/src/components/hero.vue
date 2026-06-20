@@ -1,8 +1,8 @@
 <template>
   <section
     ref="heroRef"
-    class="bg-forest-200 text-cream-100 group relative flex min-h-screen items-center overflow-hidden"
-    @mousemove="handleGlobalMouseMove"
+    class=" text-cream-100 group relative flex min-h-screen items-center overflow-hidden"
+    @mousemove="hero.handleGlobalMouseMove"
   >
     <!-- 1. Основной яркий курсор -->
     <div
@@ -10,7 +10,7 @@
       :style="{
         left: '-150px',
         top: '-150px',
-        transform: `translate(${cursor.x}px, ${cursor.y}px)`,
+        transform: `translate(${hero.cursor.x}px, ${hero.cursor.y}px)`,
       }"
     />
 
@@ -20,7 +20,7 @@
       :style="{
         left: '-60px',
         top: '-60px',
-        transform: `translate(${satellite1.x}px, ${satellite1.y}px)`,
+        transform: `translate(${hero.satellite1.x}px, ${hero.satellite1.y}px)`,
       }"
     />
 
@@ -30,7 +30,7 @@
       :style="{
         left: '-40px',
         top: '-40px',
-        transform: `translate(${satellite2.x}px, ${satellite2.y}px)`,
+        transform: `translate(${hero.satellite2.x}px, ${hero.satellite2.y}px)`,
       }"
     />
 
@@ -63,7 +63,7 @@
       <button
         class="text-cream-100/40 hover:text-accent transition-colors duration-smooth p-1.5 rounded-lg hover:bg-white/5"
         title="Редактировать Hero"
-        @click="openEditModal"
+        @click="hero.openEditModal"
       >
         <i class="fa-solid fa-pen text-xs"></i>
       </button>
@@ -84,37 +84,37 @@
             ></span>
             <span class="bg-lime relative inline-flex h-2 w-2 rounded-full"></span>
           </span>
-          {{ badgeText }}
+          {{ hero.badgeText }}
         </div>
 
         <!-- Заголовок -->
         <h1
           class="font-serif text-5xl leading-[1.1] font-black tracking-tight drop-shadow-lg lg:text-7xl"
         >
-          {{ titleLine1 }}
+          {{ hero.titleLine1 }}
           <br />
           <span
             class="from-lime bg-gradient-to-r to-emerald-400 bg-clip-text text-transparent italic"
           >
-            {{ titleLine2 }}
+            {{ hero.titleLine2 }}
           </span>
           <br />
-          {{ titleLine3 }}
+          {{ hero.titleLine3 }}
         </h1>
 
         <!-- Описание -->
         <p class="text-cream-100/70 max-w-xl text-lg leading-relaxed">
-          {{ description }}
+          {{ hero.description }}
         </p>
 
         <!-- Кнопки -->
         <div class="flex flex-wrap gap-4 pt-4">
           <button
-            @click="openAnimalModal('lion')"
+            @click="hero.openAnimalModal('lion')"
             class="group bg-lime text-forest-900 relative overflow-hidden rounded-full px-8 py-4 font-bold transition-all hover:scale-105 hover:shadow-[0_0_30px_rgba(168,201,107,0.6)]"
           >
             <span class="relative z-10 flex items-center gap-2">
-              {{ buttonText1 }}
+              {{ hero.buttonText1 }}
               <svg
                 class="h-4 w-4 transition-transform group-hover:translate-x-1"
                 fill="none"
@@ -131,22 +131,22 @@
             </span>
           </button>
 
+          <!-- ✅ НОВАЯ КНОПКА - Интерактивная карта -->
           <button
-            class="text-cream-100 group flex items-center gap-3 rounded-full border border-white/10 bg-white/5 px-8 py-4 font-medium backdrop-blur-sm transition-all hover:bg-white/10"
-            @click="openVirtualTour()"
+            @click="hero.goToMap"
+            class="group/map relative overflow-hidden rounded-full border border-lime/30 bg-gradient-to-r from-forest-300/40 to-forest-400/40 px-8 py-4 font-medium text-cream-100 backdrop-blur-sm transition-all duration-500 hover:border-lime/60 hover:shadow-[0_0_30px_rgba(168,201,107,0.4)] hover:scale-105"
           >
-            <span
-              class="group-hover:border-lime/50 group-hover:bg-lime/10 flex size-10 items-center justify-center rounded-full border border-white/20 bg-white/10 transition-colors"
-            >
-              <svg
-                class="text-cream-100 group-hover:text-lime ml-0.5 h-4 w-4"
-                fill="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path d="M8 5v14l11-7z" />
-              </svg>
+            <!-- Фоновая анимация при hover -->
+            <div class="absolute inset-0 -z-10 bg-gradient-to-r from-lime/0 via-lime/20 to-lime/0 opacity-0 transition-opacity duration-500 group-hover/map:opacity-100"></div>
+            
+            <!-- Бегущий блик -->
+            <div class="absolute inset-0 -z-10 translate-x-[-100%] bg-gradient-to-r from-transparent via-white/20 to-transparent transition-transform duration-1000 group-hover/map:translate-x-[100%]"></div>
+            
+            <span class="relative z-10 flex items-center gap-3">
+              <i class="fa-solid fa-map-location-dot text-lime transition-transform duration-300 group-hover/map:rotate-12 group-hover/map:scale-110"></i>
+              <span>{{ hero.buttonText2 }}</span>
+              <i class="fa-solid fa-arrow-right text-sm text-lime/60 transition-all duration-300 group-hover/map:translate-x-1 group-hover/map:text-lime"></i>
             </span>
-            {{ buttonText2 }}
           </button>
         </div>
       </div>
@@ -156,10 +156,10 @@
         <div
           ref="cardRef"
           class="preserve-3d relative h-[500px] w-[360px] cursor-pointer transition-transform duration-100 ease-out"
-          :style="cardStyle"
-          @mousemove.stop="handleCardMouseMove"
-          @mouseleave="handleCardMouseLeave"
-          @click="openAnimalModal('lion')"
+          :style="hero.cardStyle"
+          @mousemove.stop="hero.handleCardMouseMove"
+          @mouseleave="hero.handleCardMouseLeave"
+          @click="hero.openAnimalModal('lion')"
         >
           <!-- Main Card -->
           <div
@@ -169,7 +169,7 @@
             <div
               class="pointer-events-none absolute inset-0 z-20 opacity-0 mix-blend-overlay transition-opacity duration-300"
               :style="{
-                background: `radial-gradient(600px circle at ${cardMouse.x}px ${cardMouse.y}px, rgba(168, 201, 107, 0.25), transparent 40%)`,
+                background: `radial-gradient(600px circle at ${hero.cardMouse.x}px ${hero.cardMouse.y}px, rgba(168, 201, 107, 0.25), transparent 40%)`,
               }"
             ></div>
 
@@ -177,6 +177,7 @@
             <div
               class="absolute inset-0 z-10 flex items-center justify-center brightness-110 drop-shadow-2xl filter transition-transform duration-500 select-none group-hover:scale-110"
             >
+              <img src="https://avatars.mds.yandex.net/i?id=efafca60f07471a6b9a1cbdcb2625e85_l-5875611-images-thumbs&n=13" alt="">
               <AppIcon name="lion" class="text-lime/90 h-64 w-64" />
             </div>
 
@@ -193,13 +194,13 @@
                   d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
                 />
               </svg>
-              {{ cardBadge }}
+              {{ hero.cardBadge }}
             </div>
 
             <!-- Информация о животном -->
             <div class="absolute right-8 bottom-8 left-8 z-20">
-              <h3 class="mb-1 font-serif text-4xl font-bold text-white">{{ animalName }}</h3>
-              <p class="text-cream-100/60 text-sm font-medium">{{ animalInfo }}</p>
+              <h3 class="mb-1 font-serif text-4xl font-bold text-white">{{ hero.animalName }}</h3>
+              <p class="text-cream-100/60 text-sm font-medium">{{ hero.animalInfo }}</p>
             </div>
           </div>
 
@@ -211,7 +212,7 @@
               <AppIcon name="paw" class="text-forest-400 h-6 w-6" />
             </div>
             <div>
-              <div class="font-serif text-2xl leading-none font-bold">{{ statsAnimals }}</div>
+              <div class="font-serif text-2xl leading-none font-bold">{{ hero.statsAnimals }}</div>
               <div class="text-[10px] font-bold tracking-wider text-gray-500 uppercase">
                 животных
               </div>
@@ -225,7 +226,7 @@
               <AppIcon name="globe" class="text-forest-400 h-6 w-6" />
             </div>
             <div>
-              <div class="font-serif text-2xl leading-none font-bold">{{ statsContinents }}</div>
+              <div class="font-serif text-2xl leading-none font-bold">{{ hero.statsContinents }}</div>
               <div class="text-[10px] font-bold tracking-wider text-gray-500 uppercase">
                 континентов
               </div>
@@ -236,16 +237,16 @@
     </div>
 
     <!-- Modal Component для животных -->
-    <AnimalModal :visible="isModalOpen" :animal-id="selectedAnimalId" @close="closeAnimalModal" />
+    <AnimalModal :visible="hero.isModalOpen" :animal-id="hero.selectedAnimalId" @close="hero.closeAnimalModal" />
 
     <!-- Universal Edit Modal -->
     <EditModal
-      :visible="isEditModalOpen"
+      :visible="hero.isEditModalOpen"
       title="Редактирование Hero секции"
       subtitle="Измените текстовые элементы и параметры"
-      :fields="editFields"
-      @close="closeEditModal"
-      @save="handleEditSave"
+      :fields="hero.editFields"
+      @close="hero.closeEditModal"
+      @save="hero.handleEditSave"
     />
   </section>
 </template>
@@ -254,36 +255,21 @@
 import AnimalModal from '@/components/overlay/AnimalModal.vue'
 import EditModal from '@/components/overlay/EditModal.vue'
 import AppIcon from '@/components/ui/BaseIcon.vue'
-import { computed, reactive, ref } from 'vue'
+import { computed, ref } from 'vue'
+
+import { useHero } from '@/composables/useHero'
 import { useAuthStore } from '@/stores/auth'
 
-// ✅ Используем authStore вместо хардкода
+const hero = useHero()
 const authStore = useAuthStore()
 
-// State for Edit Modal
-const isEditModalOpen = ref(false)
-
-// Editable fields
-const badgeText = ref('Открыто каждый день')
-const titleLine1 = ref('Мир дикой')
-const titleLine2 = ref('природы')
-const titleLine3 = ref('у твоих ног')
-const description = ref('ZooVerse — живое путешествие по пяти континентам без перелётов. Более 3 000 животных, интерактивные зоны и незабываемые впечатления для всей семьи.')
-const buttonText1 = ref('Познакомиться с животными')
-const buttonText2 = ref('Виртуальный тур')
-const cardBadge = ref('Звезда сезона')
-const animalName = ref('Симба')
-const animalInfo = ref('Африканский лев · Зона Саванна')
-const statsAnimals = ref('3000+')
-const statsContinents = ref('5')
-
-// Dynamic fields for EditModal
+// Поля для формы редактирования
 const editFields = computed(() => [
   {
     key: 'badgeText',
     label: 'Бейдж статуса',
     type: 'text' as const,
-    value: badgeText.value,
+    value: hero.badgeText,                 // передаём ref целиком
     placeholder: 'Например: Открыто каждый день',
     hint: 'Текст в верхнем левом бейдже',
     icon: 'fa-solid fa-tag',
@@ -292,7 +278,7 @@ const editFields = computed(() => [
     key: 'titleLine1',
     label: 'Заголовок (строка 1)',
     type: 'text' as const,
-    value: titleLine1.value,
+    value: hero.titleLine1,
     placeholder: 'Первая строка заголовка',
     required: true,
     icon: 'fa-solid fa-heading',
@@ -301,7 +287,7 @@ const editFields = computed(() => [
     key: 'titleLine2',
     label: 'Заголовок (строка 2 - акцентная)',
     type: 'text' as const,
-    value: titleLine2.value,
+    value: hero.titleLine2,
     placeholder: 'Вторая строка заголовка (выделена цветом)',
     required: true,
     icon: 'fa-solid fa-heading',
@@ -310,7 +296,7 @@ const editFields = computed(() => [
     key: 'titleLine3',
     label: 'Заголовок (строка 3)',
     type: 'text' as const,
-    value: titleLine3.value,
+    value: hero.titleLine3,
     placeholder: 'Третья строка заголовка',
     required: true,
     icon: 'fa-solid fa-heading',
@@ -319,7 +305,7 @@ const editFields = computed(() => [
     key: 'description',
     label: 'Описание',
     type: 'textarea' as const,
-    value: description.value,
+    value: hero.description,
     placeholder: 'Описание секции',
     rows: 4,
     hint: 'Основной текст под заголовком',
@@ -329,7 +315,7 @@ const editFields = computed(() => [
     key: 'buttonText1',
     label: 'Текст первой кнопки',
     type: 'text' as const,
-    value: buttonText1.value,
+    value: hero.buttonText1,
     placeholder: 'Текст основной кнопки',
     icon: 'fa-solid fa-arrow-right',
   },
@@ -337,7 +323,7 @@ const editFields = computed(() => [
     key: 'buttonText2',
     label: 'Текст второй кнопки',
     type: 'text' as const,
-    value: buttonText2.value,
+    value: hero.buttonText2,
     placeholder: 'Текст вторичной кнопки',
     icon: 'fa-solid fa-arrow-right',
   },
@@ -345,7 +331,7 @@ const editFields = computed(() => [
     key: 'cardBadge',
     label: 'Бейдж на карточке',
     type: 'text' as const,
-    value: cardBadge.value,
+    value: hero.cardBadge,
     placeholder: 'Например: Звезда сезона',
     icon: 'fa-solid fa-star',
   },
@@ -353,7 +339,7 @@ const editFields = computed(() => [
     key: 'animalName',
     label: 'Имя животного',
     type: 'text' as const,
-    value: animalName.value,
+    value: hero.animalName,
     placeholder: 'Например: Симба',
     icon: 'fa-solid fa-paw',
   },
@@ -361,7 +347,7 @@ const editFields = computed(() => [
     key: 'animalInfo',
     label: 'Информация о животном',
     type: 'text' as const,
-    value: animalInfo.value,
+    value: hero.animalInfo,
     placeholder: 'Например: Африканский лев · Зона Саванна',
     hint: 'Описание под именем животного',
     icon: 'fa-solid fa-info-circle',
@@ -370,7 +356,7 @@ const editFields = computed(() => [
     key: 'statsAnimals',
     label: 'Статистика: животные',
     type: 'text' as const,
-    value: statsAnimals.value,
+    value: hero.statsAnimals,
     placeholder: 'Например: 3000+',
     icon: 'fa-solid fa-paw',
   },
@@ -378,120 +364,19 @@ const editFields = computed(() => [
     key: 'statsContinents',
     label: 'Статистика: континенты',
     type: 'text' as const,
-    value: statsContinents.value,
+    value: hero.statsContinents,
     placeholder: 'Например: 5',
     icon: 'fa-solid fa-globe',
   },
 ])
 
-// State for Modal
-const isModalOpen = ref(false)
-const selectedAnimalId = ref<string | null>(null)
-
-// State for Global Cursor Glow
-const heroRef = ref<HTMLElement | null>(null)
-const cursor = reactive({ x: 0, y: 0 })
-const satellite1 = reactive({ x: 0, y: 0 })
-const satellite2 = reactive({ x: 0, y: 0 })
-
-const handleGlobalMouseMove = (e: MouseEvent) => {
-  if (!heroRef.value) return
-
-  const rect = heroRef.value.getBoundingClientRect()
-  const x = e.clientX - rect.left
-  const y = e.clientY - rect.top
-
-  cursor.x = x
-  cursor.y = y
-  satellite1.x = x + 30
-  satellite1.y = y + 50
-  satellite2.x = x - 20
-  satellite2.y = y + 70
-}
-
-// State for Card Parallax & Internal Glow
-const cardRef = ref<HTMLElement | null>(null)
-const cardMouse = reactive({ x: 0, y: 0 })
-const rotate = reactive({ x: 0, y: 0 })
-
-const handleCardMouseMove = (e: MouseEvent) => {
-  if (!cardRef.value) return
-  const rect = cardRef.value.getBoundingClientRect()
-
-  cardMouse.x = e.clientX - rect.left
-  cardMouse.y = e.clientY - rect.top
-
-  const centerX = rect.width / 2
-  const centerY = rect.height / 2
-  rotate.y = (e.clientX - rect.left - centerX) / 20
-  rotate.x = -(e.clientY - rect.top - centerY) / 20
-}
-
-const handleCardMouseLeave = () => {
-  rotate.x = 0
-  rotate.y = 0
-}
-
-const cardStyle = computed(() => ({
-  transform: `rotateY(${rotate.y}deg) rotateX(${rotate.x}deg)`,
-}))
-
-// Modal Logic
-const openAnimalModal = (id: string) => {
-  selectedAnimalId.value = id
-  isModalOpen.value = true
-}
-
-const closeAnimalModal = () => {
-  isModalOpen.value = false
-  setTimeout(() => {
-    selectedAnimalId.value = null
-  }, 300)
-}
-
-const openVirtualTour = () => {
-  console.log('Открыть виртуальный тур')
-}
-
-// Edit Modal Logic
-const openEditModal = () => {
-  isEditModalOpen.value = true
-}
-
-const closeEditModal = () => {
-  isEditModalOpen.value = false
-}
-
-const handleEditSave = (values: Record<string, any>) => {
-  // Update all reactive values
-  if (values.badgeText !== undefined) badgeText.value = values.badgeText
-  if (values.titleLine1 !== undefined) titleLine1.value = values.titleLine1
-  if (values.titleLine2 !== undefined) titleLine2.value = values.titleLine2
-  if (values.titleLine3 !== undefined) titleLine3.value = values.titleLine3
-  if (values.description !== undefined) description.value = values.description
-  if (values.buttonText1 !== undefined) buttonText1.value = values.buttonText1
-  if (values.buttonText2 !== undefined) buttonText2.value = values.buttonText2
-  if (values.cardBadge !== undefined) cardBadge.value = values.cardBadge
-  if (values.animalName !== undefined) animalName.value = values.animalName
-  if (values.animalInfo !== undefined) animalInfo.value = values.animalInfo
-  if (values.statsAnimals !== undefined) statsAnimals.value = values.statsAnimals
-  if (values.statsContinents !== undefined) statsContinents.value = values.statsContinents
-
-  console.log('Сохранены изменения:', values)
-  // TODO: Отправить данные на бэкенд
-}
-
-// ✅ Функция для переключения режима редактирования (вызывается из App.vue)
-const toggleEditMode = () => {
-  openEditModal()
-}
-
-// Expose для родительского компонента
 defineExpose({
-  openEditModal,
-  toggleEditMode,
+  openEditModal: hero.openEditModal,
+  toggleEditMode: hero.toggleEditMode,
 })
 </script>
+
+
 
 <style scoped>
 .perspective-1000 {

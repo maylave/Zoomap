@@ -73,6 +73,14 @@ export const animalsService = {
     offset?: number
   }): Promise<AnimalsResponse> => {
     const response = await api.get('/animals', { params })
+
+    if (Array.isArray(response.data)) {
+      return {
+        animals: response.data,
+        total: response.data.length,
+      }
+    }
+
     return response.data
   },
 

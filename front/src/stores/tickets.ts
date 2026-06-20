@@ -163,52 +163,83 @@ export const useTicketsStore = defineStore('tickets', () => {
   }
 
   // Создать бронирование
-  async function createBooking() {
-    if (!isFormValid.value) {
-      ElMessage.warning('Заполните все поля')
-      return null
-    }
-
+  async function createBooking(bookingData?: {
+    visitDate: string
+    visitTime: string
+    tickets: Array<{
+      ticketTypeId: number
+      quantity: number
+      price: number
+    }>
+  }) {
     isLoading.value = true
     error.value = null
 
     try {
-      const tickets = Object.entries(selectedTickets.value)
-        .filter(([_, qty]) => qty > 0)
-        .map(([id, qty]) => {
-          const ticket = ticketTypes.value.find((t) => t.id === Number(id))!
-          return {
-            ticketTypeId: ticket.id,
-            quantity: qty,
-            price: ticket.price,
-          }
-        })
+      // Если переданы данные — используем их
+      let tickets: Array<{ ticketTypeId: number; quantity: number; price: number }>
+      let finalDate: string
+      let finalTime: string
 
-      if (tickets.length === 0) {
-        ElMessage.warning('Выберите хотя бы один билет')
-        return null
+      if (bookingData) {
+        // ✅ Используем переданные данные
+        tickets = bookingData.tickets
+        finalDate = bookingData.visitDate
+        finalTime = bookingData.visitTime
+      } else {
+        // Fallback: используем state
+        if (!isFormValid.value) {
+          ElMessage.warning('Заполните все поля')
+          return null
+        }
+
+        tickets = Object.entries(selectedTickets.value)
+          .filter(([_, qty]) => qty > 0)
+          .map(([id, qty]) => {
+            const ticket = ticketTypes.value.find((t) => t.id === Number(id))!
+            return {
+              ticketTypeId: ticket.id,
+              quantity: qty,
+              price: ticket.price,
+            }
+          })
+
+        if (tickets.length === 0) {
+          ElMessage.warning('Выберите хотя бы один билет')
+          return null
+        }
+
+        finalDate = selectedDate.value
+        finalTime = selectedTime.value
       }
 
-      const bookingData: BookingRequest = {
-        visitDate: selectedDate.value,
-        visitTime: selectedTime.value,
+      const requestData: BookingRequest = {
+        visitDate: finalDate,
+        visitTime: finalTime,
         tickets,
       }
 
-      currentBooking.value = await ticketsService.book(bookingData)
+      console.log('📡 Store: создание бронирования', requestData)
+
+      currentBooking.value = await ticketsService.book(requestData)
+
+      console.log('✅ Store: бронирование создано', currentBooking.value)
 
       ElMessage.success('Бронирование создано!')
 
       // Обновляем список бронирований
       await fetchMyBookings()
 
-      // Сбрасываем форму
-      resetForm()
+      // Сбрасываем форму только если использовали state
+      if (!bookingData) {
+        resetForm()
+      }
 
       return currentBooking.value
     } catch (err: any) {
       const message = err.response?.data?.error || 'Ошибка бронирования'
       error.value = message
+      console.error('❌ Store: ошибка бронирования', err)
       ElMessage.error(message)
       throw err
     } finally {

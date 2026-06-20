@@ -58,6 +58,9 @@ export interface BookInput {
   userPromocodeId?: number
 }
 
+// ✅ Алиас для совместимости со store
+export type BookingRequest = BookInput
+
 export interface ValidatedPromo {
   id: number
   code: string
@@ -89,6 +92,29 @@ export const ticketsService = {
   getTypes: async (): Promise<TicketType[]> => {
     const response = await api.get('/tickets/types')
     return response.data
+  },
+
+  // Получить все типы билетов (включая неактивные) — для админа
+  getAllTypes: async (): Promise<TicketType[]> => {
+    const response = await api.get('/tickets/admin/types')
+    return response.data
+  },
+
+  // Создать тип билета (админ)
+  createType: async (data: Partial<TicketType>): Promise<TicketType> => {
+    const response = await api.post('/tickets/admin/types', data)
+    return response.data
+  },
+
+  // Обновить тип билета (админ)
+  updateType: async (id: number, data: Partial<TicketType>): Promise<TicketType> => {
+    const response = await api.put(`/tickets/admin/types/${id}`, data)
+    return response.data
+  },
+
+  // Удалить тип билета (админ)
+  deleteType: async (id: number): Promise<void> => {
+    await api.delete(`/tickets/admin/types/${id}`)
   },
 
   // Получить расписание
@@ -162,6 +188,15 @@ export const tickerService = {
     activeOnly?: boolean
   }): Promise<{ items: TickerItem[]; total: number }> => {
     const response = await api.get('/ticker', { params })
+
+    // Защита: если пришёл массив
+    if (Array.isArray(response.data)) {
+      return {
+        items: response.data,
+        total: response.data.length,
+      }
+    }
+
     return response.data
   },
 

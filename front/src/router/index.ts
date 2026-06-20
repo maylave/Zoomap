@@ -4,7 +4,7 @@ import form from '@/views/form.vue'
 import AnimalsCatalog from '@/views/AnimalsCatalog.vue'
 import ZonesAnimals from '@/views/ZonesAnimals.vue'
 import ApiDocs from '@/views/ApiDocs.vue'
-import NotFound from '@/views/Not.vue' // ✅ Исправлено
+import NotFound from '@/views/Not.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -40,8 +40,9 @@ const router = createRouter({
       name: 'NotFound',
       component: NotFound,
     },
+
     {
-      path: '/:pathMatch(.*)*', // 👈 Все несуществующие маршруты → 404
+      path: '/:pathMatch(.*)*',
       redirect: '/404',
     },
   ],

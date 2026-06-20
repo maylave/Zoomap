@@ -156,6 +156,7 @@
               <button 
                 type="submit"
                 :disabled="isLoading"
+                @click="handleLogin"
                 class="mt-2 w-full bg-sage text-cream-100 font-semibold py-3.5 rounded-2xl 
                        shadow-lg shadow-forest-400/50
                        hover:bg-sage/90 hover:shadow-xl hover:-translate-y-0.5 

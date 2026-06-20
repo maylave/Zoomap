@@ -1,34 +1,25 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
+import { promocodesService, type Promocode } from '@/services/promocodes.service'
 
-interface Promocode {
-  id: number
-  code: string
-  discount: number
-  type: 'percent' | 'fixed'
-  status: 'active' | 'expired' | 'used'
-  createdAt: string
-  expiresAt: string
-  description: string
-  used: boolean
-}
-
-const props = defineProps<{
-  promocodes: Promocode[]
-}>()
+// Данные
+const promocodes = ref<Promocode[]>([])
+const isLoading = ref(true)
+const loadError = ref('')
 
 const searchQuery = ref('')
 const statusFilter = ref<'all' | 'active' | 'expired' | 'used'>('all')
 
 // Статистика
 const stats = computed(() => {
-  const active = props.promocodes.filter((p) => p.status === 'active')
-  const expired = props.promocodes.filter((p) => p.status === 'expired')
-  const used = props.promocodes.filter((p) => p.status === 'used')
+  const list = promocodes.value || []
+  const active = list.filter((p) => p.status === 'active')
+  const expired = list.filter((p) => p.status === 'expired')
+  const used = list.filter((p) => p.status === 'used')
 
   return {
-    total: props.promocodes.length,
+    total: list.length,
     active: active.length,
     expired: expired.length,
     used: used.length,
@@ -37,11 +28,12 @@ const stats = computed(() => {
 
 // Фильтрация
 const filteredPromocodes = computed(() => {
-  return props.promocodes.filter((p) => {
+  const list = promocodes.value || []
+  return list.filter((p) => {
     const matchesSearch =
       !searchQuery.value ||
       p.code.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-      p.description.toLowerCase().includes(searchQuery.value.toLowerCase())
+      (p.description && p.description.toLowerCase().includes(searchQuery.value.toLowerCase()))
 
     const matchesStatus = statusFilter.value === 'all' || p.status === statusFilter.value
 
@@ -68,32 +60,32 @@ const formatDiscount = (promocode: Promocode) => {
   return `${promocode.discount} ₽`
 }
 
-// ✅ Статусы — БЕЗ лаймового, используем amber/terracotta/cream
+// Статусы
 const getStatusConfig = (status: Promocode['status']) => {
   const configs = {
     active: {
       label: 'Активен',
       class: 'bg-amber-500/20 text-amber-300 border-amber-500/30',
-      icon: 'check',
+      icon: 'fa-solid fa-check',
       iconColor: 'text-amber-300',
       bgColor: 'bg-amber-500/10',
     },
     expired: {
       label: 'Истёк',
       class: 'bg-white/10 text-cream-100/60 border-white/10',
-      icon: 'clock',
+      icon: 'fa-solid fa-clock',
       iconColor: 'text-cream-100/50',
       bgColor: 'bg-white/5',
     },
     used: {
       label: 'Использован',
       class: 'bg-terracotta/20 text-terracotta border-terracotta/30',
-      icon: 'ticket',
+      icon: 'fa-solid fa-ticket',
       iconColor: 'text-terracotta',
       bgColor: 'bg-terracotta/10',
     },
   }
-  return configs[status]
+  return configs[status] || configs.active
 }
 
 // Копирование промокода
@@ -114,6 +106,31 @@ const daysLeft = (expiresAt: string) => {
   const days = Math.ceil(diff / (1000 * 60 * 60 * 24))
   return days > 0 ? days : 0
 }
+
+// ==================== ЗАГРУЗКА ДАННЫХ ====================
+
+const loadPromocodes = async () => {
+  isLoading.value = true
+  loadError.value = ''
+  
+  try {
+    const response = await promocodesService.getMy()
+    promocodes.value = response.promocodes || []
+    console.log('✅ Загружено промокодов:', promocodes.value.length)
+  } catch (error: any) {
+    console.error('❌ Error loading promocodes:', error)
+    loadError.value = error.response?.data?.error || 'Не удалось загрузить промокоды'
+    ElMessage.error(loadError.value)
+  } finally {
+    isLoading.value = false
+  }
+}
+
+// ==================== LIFECYCLE ====================
+
+onMounted(() => {
+  loadPromocodes()
+})
 </script>
 
 <template>
@@ -190,14 +207,29 @@ const daysLeft = (expiresAt: string) => {
         </div>
       </div>
 
+      <!-- Loading -->
+      <div v-if="isLoading" class="py-12 text-center">
+        <i class="fa-solid fa-circle-notch fa-spin text-3xl text-amber"></i>
+      </div>
+
+      <!-- Error -->
+      <div v-else-if="loadError" class="py-12 text-center">
+        <i class="fa-solid fa-triangle-exclamation text-5xl text-terracotta mb-3"></i>
+        <div class="text-cream-100/70">{{ loadError }}</div>
+        <button @click="loadPromocodes" class="mt-4 rounded-full bg-amber px-6 py-2 text-forest-900 font-medium">
+          <i class="fa-solid fa-rotate-right mr-2"></i>
+          Повторить
+        </button>
+      </div>
+
       <!-- Список промокодов -->
-      <div class="space-y-3">
+      <div v-else class="space-y-3">
         <div
           v-for="promocode in filteredPromocodes"
           :key="promocode.id"
           class="group relative overflow-hidden rounded-xl border border-white/5 bg-white/[0.02] p-5 transition hover:border-white/10 hover:bg-white/5"
         >
-          <!-- Фоновый градиент для активных (amber) -->
+          <!-- Фоновый градиент для активных -->
           <div
             v-if="promocode.status === 'active'"
             class="absolute inset-0 bg-gradient-to-br from-amber/5 to-transparent opacity-0 transition group-hover:opacity-100"
@@ -211,14 +243,9 @@ const daysLeft = (expiresAt: string) => {
                 :class="getStatusConfig(promocode.status).bgColor"
               >
                 <i
-                  :class="getStatusConfig(promocode.status).iconColor"
-                  class="fa-solid"
-                  :style="{ fontSize: '1.5rem' }"
-                >
-                  <template v-if="promocode.status === 'active'">✓</template>
-                  <template v-else-if="promocode.status === 'used'">🎫</template>
-                  <template v-else>⏱</template>
-                </i>
+                  :class="[getStatusConfig(promocode.status).icon, getStatusConfig(promocode.status).iconColor]"
+                  class="text-2xl"
+                ></i>
               </div>
 
               <div class="flex-1 min-w-0">
@@ -296,7 +323,7 @@ const daysLeft = (expiresAt: string) => {
 
       <!-- Итого -->
       <div
-        v-if="filteredPromocodes.length > 0"
+        v-if="filteredPromocodes.length > 0 && !isLoading"
         class="mt-4 flex items-center justify-between border-t border-white/10 pt-4 text-sm text-cream-100/50"
       >
         <span>Показано: {{ filteredPromocodes.length }} из {{ promocodes.length }}</span>

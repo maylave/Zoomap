@@ -1,5 +1,5 @@
 <template>
-  <section class="relative w-full overflow-hidden bg-forest-300/80 backdrop-blur-sm py-4">
+  <section class="relative w-full overflow-hidden backdrop-blur-sm py-4">
     
     <!-- Блок предупреждения (только для админа) -->
     <div
@@ -40,8 +40,8 @@
     </div>
 
     <!-- Градиентные маски по краям -->
-    <div class="pointer-events-none absolute inset-y-0 left-0 z-10 w-24 bg-gradient-to-r from-forest-300/80 to-transparent" />
-    <div class="pointer-events-none absolute inset-y-0 right-0 z-10 w-24 bg-gradient-to-l from-forest-300/80 to-transparent" />
+    <div class="pointer-events-none absolute inset-y-0 left-0 z-10 w-24 bg-gradient-to-r from-forest-400/80 to-transparent" />
+    <div class="pointer-events-none absolute inset-y-0 right-0 z-10 w-24 bg-gradient-to-l from-forest-400/80 to-transparent" />
 
     <!-- Loading State -->
     <div v-if="isLoading" class="flex items-center justify-center py-2">
@@ -117,7 +117,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import EditModal from '@/components/overlay/EditModal.vue'
 
 import { useAuthStore } from '@/stores/auth'
-import { tickerService, type TickerItem } from '@/services/tickets.service' // ✅ Правильный импорт!
+import { tickerService, type TickerItem } from '@/services/ticker.service' // ✅ Правильный импорт!
 
 const authStore = useAuthStore()
 
@@ -142,6 +142,7 @@ const activeItems = computed(() =>
 )
 
 // Поля для редактирования
+// Поля для редактирования
 const itemEditFields = computed(() => [
   {
     key: 'text',
@@ -154,6 +155,13 @@ const itemEditFields = computed(() => [
     icon: 'fa-solid fa-font',
   },
   {
+    key: 'icon',
+    label: 'Иконка',
+    type: 'icon-picker' as const,  // ← ИЗМЕНИЛИ С 'text' НА 'icon-picker'
+    value: editingItem.value?.icon || '',
+    hint: 'Выберите иконку из списка для отображения перед текстом',
+  },
+  {
     key: 'link',
     label: 'Ссылка (опционально)',
     type: 'url' as const,
@@ -161,15 +169,6 @@ const itemEditFields = computed(() => [
     placeholder: 'https://example.com',
     hint: 'Если указать — текст станет кликабельным',
     icon: 'fa-solid fa-link',
-  },
-  {
-    key: 'icon',
-    label: 'Иконка (опционально)',
-    type: 'text' as const,
-    value: editingItem.value?.icon || '',
-    placeholder: 'Название иконки',
-    hint: 'Дополнительная иконка рядом с текстом',
-    icon: 'fa-solid fa-image',
   },
   {
     key: 'displayOrder',

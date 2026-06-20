@@ -280,6 +280,9 @@
 
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
+import { useRouter } from 'vue-router'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { useAuthStore } from '@/stores/auth'
 import { ticketsService } from '@/services/tickets.service'
 
 interface Ticket {
@@ -312,6 +315,9 @@ const emit = defineEmits<{
   close: []
   purchase: [data: { tickets: SelectedTicket[]; date: string; time: string }]
 }>()
+
+const router = useRouter()
+const authStore = useAuthStore()
 
 const selectedTickets = ref<SelectedTicket[]>([])
 const showTypeSelector = ref(false)
@@ -516,29 +522,95 @@ function addTicket(ticket: Ticket) {
 function removeTicket(index: number) {
   selectedTickets.value.splice(index, 1)
 }
-
 async function handlePurchase() {
-  if (selectedTickets.value.length === 0 || !selectedTime.value || !selectedDate.value) {
+  console.log('🎫 handlePurchase вызван')
+  console.log('Auth:', authStore.isAuthenticated)
+  console.log('Tickets:', selectedTickets.value)
+  console.log('Date:', selectedDate.value)
+  console.log('Time:', selectedTime.value)
+
+  // Проверка авторизации
+  if (!authStore.isAuthenticated) {
+    console.log('❌ Не авторизован')
+    ElMessageBox.confirm(
+      'Для покупки билетов необходимо авторизоваться. Войдите или зарегистрируйтесь',
+      'Требуется авторизация',
+      {
+        confirmButtonText: 'Войти',
+        cancelButtonText: 'Зарегистрироваться',
+        confirmButtonClass: 'bg-accent hover:bg-accent/90',
+        cancelButtonClass: 'bg-white/10 hover:bg-white/20',
+        type: 'warning',
+      }
+    )
+      .then(() => {
+        emit('close')
+        setTimeout(() => {
+          router.push('/login')
+        }, 300)
+      })
+      .catch(() => {
+        emit('close')
+        setTimeout(() => {
+          router.push('/register')
+        }, 300)
+      })
+    
     return
   }
 
+  // Детальная проверка полей
+  if (selectedTickets.value.length === 0) {
+    console.log('❌ Нет билетов')
+    ElMessage.warning('Добавьте хотя бы один тип билета')
+    return
+  }
+
+  if (!selectedDate.value) {
+    console.log('❌ Не выбрана дата')
+    ElMessage.warning('Выберите дату посещения')
+    return
+  }
+
+  if (!selectedTime.value) {
+    console.log('❌ Не выбрано время')
+    ElMessage.warning('Выберите время посещения')
+    return
+  }
+
+  console.log('✅ Все проверки пройдены, начинаем покупку...')
+  
+  // ✅ ИСПРАВЛЕНИЕ: Используем non-null assertion (!)
+  const dateStr = selectedDate.value!.toISOString().split('T')[0]!
+  const timeStr = selectedTime.value!
+  
+  console.log('📤 Отправка данных:', {
+    tickets: selectedTickets.value,
+    date: dateStr,
+    time: timeStr,
+  })
+  
   isPurchasing.value = true
+  
   try {
-    const dateStr = selectedDate.value.toISOString().split('T')[0]
-    
     emit('purchase', {
       tickets: selectedTickets.value,
       date: dateStr,
-      time: selectedTime.value,
+      time: timeStr,
     })
+    
+    console.log('✅ Данные отправлены родителю')
+    
+  } catch (error) {
+    console.error('❌ Ошибка в handlePurchase:', error)
+    ElMessage.error('Произошла ошибка при оформлении билета')
   } finally {
-    // Сброс флага произойдёт после закрытия модалки
     setTimeout(() => {
       isPurchasing.value = false
+      console.log('🔄 isPurchasing сброшен')
     }, 2000)
   }
 }
-
 function handleKeydown(e: KeyboardEvent) {
   if (e.key === 'Escape') {
     if (showDatePicker.value) showDatePicker.value = false

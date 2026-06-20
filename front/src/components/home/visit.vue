@@ -334,7 +334,13 @@ const closeModal = () => {
 }
 
 // Покупка - интеграция с API
+// Покупка - интеграция с API
 const handlePurchase = async (data: { tickets: any[]; date: string; time: string }) => {
+  console.log('🎫 Родитель получил данные:', data)
+  console.log('🎫 Билеты:', data.tickets)
+  console.log('🎫 Дата:', data.date)
+  console.log('🎫 Время:', data.time)
+  
   try {
     // Маппим в формат API
     const tickets = data.tickets.map((item: any) => ({
@@ -343,12 +349,20 @@ const handlePurchase = async (data: { tickets: any[]; date: string; time: string
       price: item.ticket.price,
     }))
 
+    console.log('📤 Отправка бронирования:', {
+      visitDate: data.date,
+      visitTime: data.time,
+      tickets,
+    })
+
     // Создаём бронирование через store
     const booking = await ticketsStore.createBooking({
       visitDate: data.date,
       visitTime: data.time,
       tickets,
     })
+
+    console.log('✅ Бронирование создано:', booking)
 
     if (booking) {
       closeModal()
@@ -358,10 +372,15 @@ const handlePurchase = async (data: { tickets: any[]; date: string; time: string
       setTimeout(() => {
         router.push('/profile')
       }, 1500)
+    } else {
+      console.error('❌ Бронирование не создано (booking is null)')
+      ElMessage.error('Не удалось создать бронирование')
     }
   } catch (error: any) {
-    console.error('Ошибка покупки:', error)
-    ElMessage.error(error.response?.data?.error || 'Ошибка бронирования')
+    console.error('❌ Ошибка покупки:', error)
+    console.error('❌ Response:', error.response)
+    console.error('❌ Data:', error.response?.data)
+    ElMessage.error(error.response?.data?.error || error.message || 'Ошибка бронирования')
   }
 }
 

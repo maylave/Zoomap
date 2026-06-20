@@ -16,10 +16,30 @@
       <!-- Logo -->
       <router-link
         to="/"
-        class="text-cream-100 group text-2xl font-black tracking-tight whitespace-nowrap"
+        class="text-cream-100 group text-2xl font-black tracking-tight whitespace-nowrap flex items-center gap-2"
         @click="handleLogoClick"
       >
-        Zoo<span class="text-lime group-hover:text-lime/80 transition-colors">Verse</span>
+        <!-- ✅ Логотип с fallback -->
+        <template v-if="!logoError">
+          <img
+            class="h-35 w-auto object-contain"
+            src="@/assets/logo.png"
+            alt="ZooVerse"
+            @error="logoError = true"
+          />
+        </template>
+        <template v-else>
+          <!-- Fallback: текстовый логотип если изображение не загрузилось -->
+          <div class="flex items-center gap-2">
+            <div class="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-lime-400 to-amber-400">
+              <i class="fa-solid fa-paw text-forest-900 text-lg"></i>
+            </div>
+            <span class="bg-gradient-to-r from-lime-400 to-amber-400 bg-clip-text text-transparent text-xl font-bold">
+              ZooVerse
+            </span>
+          </div>
+        </template>
+
         <!-- Admin Badge -->
         <span
           v-if="authStore.isAdmin"
@@ -100,19 +120,18 @@
             aria-label="User profile"
           >
             <div class="relative">
-              <!-- ✅ Аватар пользователя -->
+              <!-- ✅ Аватар пользователя с fallback -->
               <div
                 class="text-forest-900 flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-lime-400 to-amber-400 text-sm font-bold shadow-inner transition-transform duration-300 group-hover/user:scale-110 overflow-hidden"
                 :class="{ 'ring-2 ring-accent/50': authStore.isAdmin }"
               >
-                <!-- Если есть аватар - показываем изображение -->
                 <img
-                  v-if="authStore.userAvatar"
+                  v-if="authStore.userAvatar && !avatarError"
                   :src="authStore.userAvatar"
                   alt="Avatar"
                   class="w-full h-full object-cover"
+                  @error="avatarError = true"
                 />
-                <!-- Иначе инициал -->
                 <span v-else>{{ userInitial }}</span>
               </div>
               <span
@@ -121,7 +140,6 @@
               ></span>
             </div>
 
-            <!-- Имя пользователя (опционально) -->
             <span class="hidden lg:block text-sm text-cream-100/80 max-w-[120px] truncate">
               {{ authStore.user?.name }}
             </span>
@@ -141,15 +159,16 @@
             <!-- Информация о пользователе -->
             <div class="px-4 py-3 border-b border-white/10 mb-1">
               <div class="flex items-center gap-3">
-                <!-- ✅ Аватар в dropdown -->
+                <!-- ✅ Аватар в dropdown с fallback -->
                 <div
                   class="text-forest-900 flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-lime-400 to-amber-400 font-bold overflow-hidden"
                 >
                   <img
-                    v-if="authStore.userAvatar"
+                    v-if="authStore.userAvatar && !avatarError"
                     :src="authStore.userAvatar"
                     alt="Avatar"
                     class="w-full h-full object-cover"
+                    @error="avatarError = true"
                   />
                   <span v-else class="text-lg">{{ userInitial }}</span>
                 </div>
@@ -266,15 +285,16 @@
           v-if="authStore.isAuthenticated"
           class="flex items-center gap-3 px-4 py-3 mb-2 rounded-xl border border-white/10 bg-white/5"
         >
-          <!-- ✅ Аватар -->
+          <!-- ✅ Аватар мобильный с fallback -->
           <div
             class="text-forest-900 flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-lime-400 to-amber-400 font-bold overflow-hidden"
           >
             <img
-              v-if="authStore.userAvatar"
+              v-if="authStore.userAvatar && !avatarError"
               :src="authStore.userAvatar"
               alt="Avatar"
               class="w-full h-full object-cover"
+              @error="avatarError = true"
             />
             <span v-else class="text-lg">{{ userInitial }}</span>
           </div>
@@ -432,6 +452,20 @@ const authStore = useAuthStore()
 const isScrolled = ref(false)
 const isMenuOpen = ref(false)
 
+// ✅ Обработка ошибок загрузки изображений
+const logoError = ref(false)
+const avatarError = ref(false)
+
+// Сбрасываем ошибку аватара при изменении URL аватара
+// (например, когда пользователь загрузил новый аватар)
+import { watch } from 'vue'
+watch(
+  () => authStore.userAvatar,
+  () => {
+    avatarError.value = false
+  }
+)
+
 // Первая буква имени пользователя
 const userInitial = computed(() => {
   const name = authStore.user?.name
@@ -440,7 +474,6 @@ const userInitial = computed(() => {
 
 // ==================== NAVIGATION ====================
 
-// Умная навигация
 const handleNavLinkClick = (path: string) => {
   if (route.path !== '/') {
     router.push('/').then(() => {
@@ -453,19 +486,16 @@ const handleNavLinkClick = (path: string) => {
   }
 }
 
-// Клик по логотипу
 const handleLogoClick = () => {
   if (route.path === '/') {
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 }
 
-// Проверка активной ссылки
 const isActiveLink = (path: string) => {
   return route.hash === path
 }
 
-// Плавный скролл к секции
 const scrollToSection = (hash: string) => {
   if (!hash || hash === '#') return
   const element = document.querySelector(hash)
@@ -479,20 +509,16 @@ const scrollToSection = (hash: string) => {
   }
 }
 
-// Переход к моим билетам
 const goToBookings = () => {
   emit('openProfile')
-  // Можно добавить переключение на вкладку "Билеты" в профиле
 }
 
-// Переход в админку
 const goToAdmin = () => {
   router.push('/admin/dashboard')
 }
 
 // ==================== AUTH ====================
 
-// Обработка выхода
 const handleLogout = async () => {
   try {
     await ElMessageBox.confirm(
@@ -580,7 +606,6 @@ html {
   animation: pulse-slow 2s ease-in-out infinite;
 }
 
-/* Кастомный скроллбар для мобильного меню */
 .overflow-y-auto::-webkit-scrollbar {
   width: 6px;
 }

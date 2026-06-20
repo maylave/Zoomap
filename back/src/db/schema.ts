@@ -64,7 +64,13 @@ export const zones = pgTable("zones", {
   id: serial("id").primaryKey(),
   name: varchar("name", { length: 100 }).notNull(),
   description: text("description"),
-  mapPosition: varchar("map_position", { length: 500 }),
+  mapPosition: varchar("map_position", { length: 500 }), // JSON: {x: 25, y: 35}
+  image: varchar("image", { length: 500 }),
+  climate: varchar("climate", { length: 100 }),
+  hours: varchar("hours", { length: 100 }),
+  location: varchar("location", { length: 100 }),
+  positionX: integer("position_x").notNull().default(50),
+  positionY: integer("position_y").notNull().default(50),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 

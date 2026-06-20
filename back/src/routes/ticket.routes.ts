@@ -210,6 +210,13 @@ router.post(
 
       const { visitDate, visitTime, tickets, userPromocodeId } = req.body;
 
+      console.log("📥 Бронирование:", {
+        userId,
+        visitDate,
+        visitTime,
+        tickets,
+      });
+
       // Валидация основных полей
       if (
         !visitDate ||
@@ -221,7 +228,7 @@ router.post(
         return res.status(400).json({ error: "Заполните все поля" });
       }
 
-      // ✅ Проверка что слот свободен
+      // Проверка что слот свободен
       const existingBooking = await db.query.ticketBookings.findFirst({
         where: and(
           eq(ticketBookings.visitDate, visitDate),
@@ -234,7 +241,7 @@ router.post(
         return res.status(400).json({ error: "Этот временной слот уже занят" });
       }
 
-      // ✅ Валидация типов билетов
+      // Валидация типов билетов
       let totalPrice = 0;
       const validatedTickets = [];
 
@@ -272,7 +279,7 @@ router.post(
         });
       }
 
-      // ✅ Применение промокода
+      // Применение промокода
       let discountAmount = 0;
       let appliedPromoId: number | null = null;
 
@@ -297,24 +304,44 @@ router.post(
             new Date(promo.validFrom) <= now &&
             new Date(promo.validUntil) >= now
           ) {
-            // Проверяем минимальную сумму
-            if (!promo.minOrderAmount || totalPrice >= promo.minOrderAmount) {
-              // Вычисляем скидку
-              if (promo.discountType === "percent") {
-                discountAmount = Math.round(
-                  totalPrice * (promo.discount / 100),
+            // Проверяем лимит использования
+            if (!promo.usageLimit || promo.usedCount < promo.usageLimit) {
+              // Проверяем минимальную сумму
+              if (!promo.minOrderAmount || totalPrice >= promo.minOrderAmount) {
+                // Вычисляем скидку
+                if (promo.discountType === "percent") {
+                  discountAmount = Math.round(
+                    totalPrice * (promo.discount / 100),
+                  );
+                } else {
+                  discountAmount = Math.min(promo.discount, totalPrice);
+                }
+
+                appliedPromoId = userPromo.id;
+                console.log(
+                  `✅ Применён промокод ${promo.code}, скидка: ${discountAmount}₽`,
                 );
               } else {
-                discountAmount = Math.min(promo.discount, totalPrice);
+                console.log(
+                  `⚠️ Промокод ${promo.code}: минимальная сумма ${promo.minOrderAmount}₽`,
+                );
               }
-
-              appliedPromoId = userPromo.id;
+            } else {
+              console.log(
+                `⚠️ Промокод ${promo.code}: достигнут лимит использования`,
+              );
             }
+          } else {
+            console.log(`⚠️ Промокод ${promo.code}: истёк срок действия`);
           }
         }
       }
 
       const finalPrice = Math.max(0, totalPrice - discountAmount);
+
+      console.log(
+        `💰 Итого: ${totalPrice}₽ - ${discountAmount}₽ = ${finalPrice}₽`,
+      );
 
       // Создаём бронирование
       const bookingResult = await db
@@ -334,6 +361,8 @@ router.post(
         return res.status(500).json({ error: "Ошибка создания бронирования" });
       }
 
+      console.log(`✅ Бронирование создано: ID ${booking.id}`);
+
       // Добавляем билеты в бронирование
       for (const ticket of validatedTickets) {
         await db.insert(bookingTickets).values({
@@ -344,7 +373,7 @@ router.post(
         });
       }
 
-      // ✅ Если применили промокод — помечаем его как использованный
+      // Если применили промокод — помечаем его как использованный
       if (appliedPromoId) {
         await db
           .update(userPromocodes)
@@ -367,6 +396,74 @@ router.post(
               sql`(SELECT promocode_id FROM user_promocodes WHERE id = ${appliedPromoId})`,
             ),
           );
+
+        console.log(`✅ Промокод помечен как использованный`);
+      }
+
+      // ✅ АВТОМАТИЧЕСКАЯ ВЫДАЧА ПРОМОКОДА ЛОЯЛЬНОСТИ
+      try {
+        // Считаем количество бронирований пользователя
+        const userBookingsCount = await db
+          .select({ count: sql<number>`count(*)` })
+          .from(ticketBookings)
+          .where(eq(ticketBookings.userId, userId));
+
+        const bookingsCount = userBookingsCount[0]?.count || 0;
+
+        console.log(`📊 Всего бронирований у пользователя: ${bookingsCount}`);
+
+        // Каждые 3 покупки — промокод лояльности
+        if (bookingsCount > 0 && bookingsCount % 3 === 0) {
+          // Ищем или создаём промокод лояльности
+          let loyaltyPromo = await db.query.promocodes.findFirst({
+            where: eq(promocodes.code, "LOYALTY-15"),
+          });
+
+          if (!loyaltyPromo) {
+            const result = await db
+              .insert(promocodes)
+              .values({
+                code: "LOYALTY-15",
+                discount: 15,
+                discountType: "percent",
+                description: "Промокод лояльности за 3+ покупки",
+                status: "active",
+                usageLimit: null,
+                usedCount: 0,
+                validFrom: new Date(),
+                validUntil: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), // 1 год
+                createdBy: userId,
+              })
+              .returning();
+            loyaltyPromo = result[0];
+            console.log(`✅ Создан промокод лояльности: LOYALTY-15`);
+          }
+
+          // Проверяем что у пользователя ещё нет этого промокода
+          const existingLoyalty = await db.query.userPromocodes.findFirst({
+            where: and(
+              eq(userPromocodes.userId, userId),
+              eq(userPromocodes.promocodeId, loyaltyPromo.id),
+              eq(userPromocodes.status, "available"),
+            ),
+          });
+
+          if (!existingLoyalty) {
+            // Выдаём промокод
+            await db.insert(userPromocodes).values({
+              userId,
+              promocodeId: loyaltyPromo.id,
+              status: "available",
+              source: "purchase",
+              expiresAt: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000), // 60 дней
+            });
+
+            console.log(`🎁 Выдан промокод лояльности пользователю ${userId}`);
+          }
+        }
+      } catch (promoError) {
+        console.error("⚠️ Ошибка выдачи промокода лояльности:", promoError);
+        // Не прерываем бронирование если промокод не выдался
       }
 
       // Получаем полное бронирование с билетами
@@ -381,6 +478,10 @@ router.post(
         },
       });
 
+      console.log(
+        `✅ Бронирование завершено: ID ${booking.id}, сумма: ${finalPrice}₽`,
+      );
+
       res.status(201).json({
         ...fullBooking,
         discount:
@@ -392,7 +493,7 @@ router.post(
             : null,
       });
     } catch (error: any) {
-      console.error("Error creating booking:", error);
+      console.error("❌ Error creating booking:", error);
       res.status(500).json({ error: error.message || "Ошибка бронирования" });
     }
   },
