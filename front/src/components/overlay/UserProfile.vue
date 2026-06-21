@@ -73,14 +73,15 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, computed, watch, onBeforeUnmount } from 'vue'
+import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
 import SidebarMenu from '@/components/ui/leftbar.vue'
 import MainContent from '@/components/layout/MainContent.vue'
 import BaseIcon from '@/components/ui/BaseIcon.vue'
 import ProfileContent from '@/components/layout/ProfileContent.vue'
 
-// Импортируем конфигурацию из отдельного файла
-import { menuGroups, menuContexts } from '@/static/profileMenu'
+// Импортируем функцию создания меню с учётом роли
+import { createMenuGroups, menuContexts } from '@/static/profileMenu'
+import { useAuthStore } from '@/stores/auth'
 
 // Props & Emits
 const props = defineProps<{ visible: boolean }>()
@@ -89,10 +90,19 @@ const emit = defineEmits<{
   (e: 'menuSelect', itemId: string): void
 }>()
 
+// Получаем данные пользователя из store
+const authStore = useAuthStore()
+
 // Состояние
 const isFullscreen = ref(false)
 const activeMenu = ref('profile')
 const isEditingProfile = ref(false)
+
+// ✅ Динамическое меню с учётом роли пользователя
+const menuGroups = computed(() => {
+  const userRole = authStore.user?.role || 'user'
+  return createMenuGroups(userRole as 'user' | 'moderator' | 'admin')
+})
 
 // Данные профиля
 const profile = ref({
@@ -165,9 +175,11 @@ const handleEscape = (event: KeyboardEvent) => {
   if (event.key === 'Escape' && props.visible) emit('close')
 }
 
-if (typeof window !== 'undefined') {
-  window.addEventListener('keydown', handleEscape)
-}
+onMounted(() => {
+  if (typeof window !== 'undefined') {
+    window.addEventListener('keydown', handleEscape)
+  }
+})
 
 onBeforeUnmount(() => {
   document.body.style.overflow = previousOverflow

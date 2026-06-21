@@ -138,12 +138,11 @@
               {{ authStore.user?.name }}
             </span>
 
-            <BaseIcon
-              name="arrowDown"
-              size="sm"
-              color="text-white/80 group-hover/user:text-lime-400 group-hover/user:rotate-180"
-              class="transition-all duration-1200"
-            />
+            <!-- Стрелка-шеврон (Font Awesome) — поворачивается при открытом dropdown -->
+            <i
+              class="fa-solid fa-chevron-down text-xs text-white/80 transition-transform duration-200 group-hover/user:rotate-180 group-hover/user:text-lime-400"
+              aria-hidden="true"
+            ></i>
           </button>
 
           <!-- Dropdown Menu -->
@@ -354,10 +353,9 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref, computed } from 'vue'
+import { onMounted, onUnmounted, ref, computed, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessageBox, ElMessage } from 'element-plus'
-import BaseIcon from '@/components/ui/BaseIcon.vue'
 import { useAuthStore } from '@/stores/auth'
 
 interface NavLink {
@@ -412,7 +410,6 @@ const avatarError = ref(false)
 
 // Сбрасываем ошибку аватара при изменении URL аватара
 // (например, когда пользователь загрузил новый аватар)
-import { watch } from 'vue'
 watch(
   () => authStore.userAvatar,
   () => {
@@ -543,10 +540,6 @@ html {
 }
 .btn-lime:hover {
   background-color: #96b85a;
-}
-
-.group\/user:hover .arrow-down-icon {
-  transform: rotate(180deg);
 }
 
 @keyframes pulse-slow {

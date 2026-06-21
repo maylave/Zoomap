@@ -1,192 +1,178 @@
-import type { MenuGroup, MenuContext } from '@/types/profileMenu.types'
+import type { MenuGroup, MenuItem } from '@/types/menu'
 
-// ==================== СТАТИЧЕСКОЕ МЕНЮ ====================
-export const menuGroups: MenuGroup[] = [
-  {
-    title: 'Аккаунт',
-    items: [
-      {
-        id: 'profile',
-        label: 'Профиль',
-        description: 'Управление личной информацией и аватаром',
-        icon: 'user',
-      },
-      {
-        id: 'notifications',
-        label: 'Уведомления',
-        description: 'Настройка оповещений и звуков',
-        icon: 'bell',
-        badge: 0,
-      },
-      {
-        id: 'appearance',
-        label: 'Внешний вид',
-        description: 'Тема оформления, язык и шрифты',
-        icon: 'palette',
-      },
-    ],
-  },
-  {
-    title: 'История',
-    items: [
-      {
-        id: 'history',
-        label: 'История покупок',
-        description: 'Просмотр истории ваших покупок',
-        icon: 'history',
-        badge: 0, // ✅ Реальное количество покупок
-      },
-      {
-        id: 'promocodes',
-        label: 'Промокоды',
-        description: 'Ваши скидки и промокоды',
-        icon: 'ticket',
-        badge: 0, // ✅ Реальное количество промокодов
-      },
-    ],
-  },
-  {
-    title: 'Администрирование',
-    items: [
-      {
-        id: 'admin-users',
-        label: 'Пользователи',
-        description: 'Управление пользователями системы',
-        icon: 'admin',
-        badge: 0,
-      },
-      {
-        id: 'admin-animals',
-        label: 'Животные',
-        description: 'Каталог животных зоопарка',
-        icon: 'paw',
-      },
-      {
-        id: 'admin-zones',
-        label: 'Зоны',
-        description: 'Управление зонами зоопарка',
-        icon: 'map',
-      },
-      {
-        id: 'admin-events',
-        label: 'События',
-        description: 'Мероприятия и активности',
-        icon: 'calendar',
-      },
-      {
-        id: 'admin-tickets',
-        label: 'Билеты',
-        description: 'Типы билетов и цены',
-        icon: 'ticket',
-      },
-      {
-        id: 'admin-bookings',
-        label: 'Бронирования',
-        description: 'Заказы посетителей',
-        icon: 'clipboard',
-        badge: 0,
-      },
-      {
-        id: 'admin-gallery',
-        label: 'Галерея',
-        description: 'Фотоальбомы зоопарка',
-        icon: 'images',
-      },
-      {
-        id: 'admin-promocodes',
-        label: 'Промокоды',
-        description: 'Управление скидочными кодами',
-        icon: 'percent',
-        badge: 0,
-      },
-      {
-        id: 'admin-ticker',
-        label: 'Бегущая строка',
-        description: 'Информационная строка',
-        icon: 'ticker',
-      },
-    ],
-  },
-]
-
-// ==================== ФУНКЦИЯ ДЛЯ СОЗДАНИЯ КОПИИ МЕНЮ ====================
-export const createMenuGroups = (): MenuGroup[] => {
-  // Глубокое клонирование чтобы не мутировать оригинал
-  return JSON.parse(JSON.stringify(menuGroups))
-}
-
-// ==================== ОБНОВЛЕНИЕ БЕЙДЖЕЙ ====================
-export const updateMenuBadges = (
-  menuGroups: MenuGroup[],
-  badges: Record<string, number>
+export const createMenuGroups = (
+  userRole: 'user' | 'moderator' | 'admin' = 'user'
 ): MenuGroup[] => {
-  menuGroups.forEach((group) => {
-    group.items.forEach((item) => {
-      if (badges[item.id] !== undefined) {
-        // Показываем бейдж только если значение > 0
-        item.badge = badges[item.id] > 0 ? badges[item.id] : undefined
-      }
+  const baseGroups: MenuGroup[] = [
+    {
+      title: 'Аккаунт',
+      items: [
+        {
+          id: 'profile',
+          label: 'Профиль',
+          description: 'Управление личной информацией и аватаром',
+          icon: 'user',
+        },
+        {
+          id: 'notifications',
+          label: 'Уведомления',
+          description: 'Настройка оповещений и звуков',
+          icon: 'bell',
+          badge: 0,
+        },
+        {
+          id: 'appearance',
+          label: 'Внешний вид',
+          description: 'Тема оформления, язык и шрифты',
+          icon: 'palette',
+        },
+      ],
+    },
+    {
+      title: 'История',
+      items: [
+        {
+          id: 'history',
+          label: 'История покупок',
+          description: 'Просмотр истории ваших покупок',
+          icon: 'history',
+          badge: 0,
+        },
+        {
+          id: 'promocodes',
+          label: 'Промокоды',
+          description: 'Ваши скидки и промокоды',
+          icon: 'ticket',
+          badge: 0,
+        },
+      ],
+    },
+  ]
+
+  // ✅ Админ-меню только для admin и moderator
+  if (userRole === 'admin' || userRole === 'moderator') {
+    baseGroups.push({
+      title: 'Администрирование',
+      items: [
+        {
+          id: 'adminUsers',
+          label: 'Пользователи',
+          description: 'Управление пользователями системы',
+          icon: 'admin',
+          badge: 0,
+        },
+        {
+          id: 'adminAnimals',
+          label: 'Животные',
+          description: 'Каталог животных зоопарка',
+          icon: 'paw',
+        },
+        {
+          id: 'adminZones',
+          label: 'Зоны',
+          description: 'Управление зонами зоопарка',
+          icon: 'map',
+        },
+        {
+          id: 'adminEvents',
+          label: 'События',
+          description: 'Мероприятия и активности',
+          icon: 'calendar',
+        },
+        {
+          id: 'adminTickets',
+          label: 'Билеты',
+          description: 'Типы билетов и цены',
+          icon: 'ticket',
+        },
+        {
+          id: 'adminBookings',
+          label: 'Бронирования',
+          description: 'Заказы посетителей',
+          icon: 'clipboard',
+          badge: 0,
+        },
+        {
+          id: 'adminGallery',
+          label: 'Галерея',
+          description: 'Фотоальбомы зоопарка',
+          icon: 'images',
+        },
+        {
+          id: 'adminPromocodes',
+          label: 'Промокоды',
+          description: 'Управление скидочными кодами',
+          icon: 'percent',
+          badge: 0,
+        },
+        {
+          id: 'adminTicker',
+          label: 'Бегущая строка',
+          description: 'Информационная строка',
+          icon: 'ticker',
+        },
+      ],
     })
-  })
-  return menuGroups
+  }
+
+  return baseGroups
 }
 
-// ==================== КОНТЕКСТЫ МЕНЮ ====================
-export const menuContexts: Record<string, MenuContext> = {
+export const menuContexts: Record<string, { label: string; description: string }> = {
   profile: {
-    label: 'Мой профиль',
-    description: 'Управляйте личной информацией и настройками аккаунта',
+    label: 'Профиль',
+    description: 'Управление личной информацией',
   },
   notifications: {
     label: 'Уведомления',
-    description: 'Настройте, какие уведомления вы хотите получать',
+    description: 'Настройка оповещений',
   },
   appearance: {
     label: 'Внешний вид',
-    description: 'Настройте тему оформления и язык интерфейса',
+    description: 'Тема и язык',
   },
   history: {
     label: 'История покупок',
-    description: 'Просмотр истории ваших покупок',
+    description: 'Ваши заказы',
   },
   promocodes: {
     label: 'Промокоды',
-    description: 'Ваши активные скидки и промокоды',
+    description: 'Ваши скидки',
   },
-  'admin-users': {
+  adminUsers: {
     label: 'Управление пользователями',
     description: 'Просмотр, создание и редактирование пользователей',
   },
-  'admin-animals': {
+  adminAnimals: {
     label: 'Управление животными',
-    description: 'Добавление, редактирование и удаление животных из каталога',
+    description: 'Добавление, редактирование и удаление животных',
   },
-  'admin-zones': {
+  adminZones: {
     label: 'Управление зонами',
-    description: 'Настройка зон зоопарка и их расположения на карте',
+    description: 'Настройка зон зоопарка',
   },
-  'admin-events': {
+  adminEvents: {
     label: 'Управление событиями',
     description: 'Создание и редактирование мероприятий',
   },
-  'admin-tickets': {
+  adminTickets: {
     label: 'Управление билетами',
-    description: 'Настройка типов билетов и их стоимости',
+    description: 'Настройка типов билетов и цен',
   },
-  'admin-bookings': {
+  adminBookings: {
     label: 'Бронирования',
-    description: 'Просмотр и управление заказами посетителей',
+    description: 'Просмотр и управление заказами',
   },
-  'admin-gallery': {
+  adminGallery: {
     label: 'Управление галереей',
     description: 'Добавление и редактирование фотографий',
   },
-  'admin-promocodes': {
+  adminPromocodes: {
     label: 'Управление промокодами',
     description: 'Создание и настройка скидочных кодов',
   },
-  'admin-ticker': {
+  adminTicker: {
     label: 'Бегущая строка',
-    description: 'Управление информационной строкой на сайте',
+    description: 'Управление информационной строкой',
   },
 }

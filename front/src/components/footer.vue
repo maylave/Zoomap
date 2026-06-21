@@ -1,5 +1,5 @@
 <template>
-  <footer class="bg-forest-900 text-cream-100 border-t border-white/5">
+  <footer class="bg-forest-900 text-cream-100 border-t border-white/5 bg-zinc-900">
     <div class="mx-auto grid max-w-7xl gap-12 px-6 py-16 md:grid-cols-2 lg:grid-cols-4">
       <!-- Logo & Description -->
       <div class="flex flex-col items-start">

@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /api/
+Disallow: /profile/
+Disallow: /*.json$
+Disallow: /*.xml$
+
+Sitemap: https://zooverse.ru/sitemap.xml
