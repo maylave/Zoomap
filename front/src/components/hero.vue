@@ -8,9 +8,9 @@
     <div
       class="bg-lime/40 pointer-events-none absolute z-0 h-[300px] w-[300px] rounded-full mix-blend-screen blur-[60px] transition-transform duration-75 ease-out will-change-transform"
       :style="{
-        left: '-150px',
-        top: '-150px',
-        transform: `translate(${hero.cursor.x}px, ${hero.cursor.y}px)`,
+        left: '0',
+        top: '0',
+        transform: `translate(${hero.cursor.x - 150}px, ${hero.cursor.y - 150}px)`,
       }"
     />
 
@@ -18,9 +18,9 @@
     <div
       class="pointer-events-none absolute z-0 h-[120px] w-[120px] rounded-full bg-emerald-400/30 mix-blend-screen blur-[40px] transition-transform duration-150 ease-out will-change-transform"
       :style="{
-        left: '-60px',
-        top: '-60px',
-        transform: `translate(${hero.satellite1.x}px, ${hero.satellite1.y}px)`,
+        left: '0',
+        top: '0',
+        transform: `translate(${hero.satellite1.x - 60}px, ${hero.satellite1.y - 60}px)`,
       }"
     />
 
@@ -28,9 +28,9 @@
     <div
       class="pointer-events-none absolute z-0 h-[80px] w-[80px] rounded-full bg-lime-200/40 mix-blend-screen blur-[30px] transition-transform duration-200 ease-out will-change-transform"
       :style="{
-        left: '-40px',
-        top: '-40px',
-        transform: `translate(${hero.satellite2.x}px, ${hero.satellite2.y}px)`,
+        left: '0',
+        top: '0',
+        transform: `translate(${hero.satellite2.x - 40}px, ${hero.satellite2.y - 40}px)`,
       }"
     />
 
@@ -378,7 +378,7 @@ defineExpose({
 
 
 
-<style scoped>
+<style >
 .perspective-1000 {
   perspective: 1000px;
 }

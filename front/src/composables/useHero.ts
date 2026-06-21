@@ -3,7 +3,6 @@ import { computed, reactive, ref, type Ref, type ComputedRef } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 
-// Для удобства обучения студентам можно вынести интерфейс — сразу видно, что отдаём наружу
 interface HeroReturn {
   isEditModalOpen: Ref<boolean>
   isModalOpen: Ref<boolean>
@@ -69,7 +68,6 @@ export const useHero = (): HeroReturn => {
   const statsAnimals = ref('3000+')
   const statsContinents = ref('5')
 
-  // ✅ Вычисляемое поле editFields — обязательно вернуть
   const editFields = computed(() => [
     { key: 'badgeText', label: 'Бейдж статуса', type: 'text' as const, value: badgeText },
     { key: 'titleLine1', label: 'Заголовок (строка 1)', type: 'text' as const, value: titleLine1 },
@@ -112,18 +110,17 @@ export const useHero = (): HeroReturn => {
     console.log('Сохранены изменения:', values)
   }
 
+  // ✅ ИСПРАВЛЕНО: Прямые координаты для fixed + плавные спутники
   const handleGlobalMouseMove = (e: MouseEvent) => {
-    if (!heroRef.value) return
-    const rect = heroRef.value.getBoundingClientRect()
-    const x = e.clientX - rect.left
-    const y = e.clientY - rect.top
+    cursor.x = e.clientX
+    cursor.y = e.clientY
 
-    cursor.x = x
-    cursor.y = y
-    satellite1.x = x + 30
-    satellite1.y = y + 50
-    satellite2.x = x - 20
-    satellite2.y = y + 70
+    // Плавное следование спутников с естественным смещением
+    satellite1.x += (e.clientX - satellite1.x) * 0.15
+    satellite1.y += (e.clientY - satellite1.y) * 0.15
+
+    satellite2.x += (e.clientX - satellite2.x) * 0.08
+    satellite2.y += (e.clientY - satellite2.y) * 0.08
   }
 
   const cardRef = ref<HTMLElement | null>(null)
@@ -139,8 +136,8 @@ export const useHero = (): HeroReturn => {
 
     const centerX = rect.width / 2
     const centerY = rect.height / 2
-    rotate.y = (e.clientX - rect.left - centerX) / 20
-    rotate.x = -(e.clientY - rect.top - centerY) / 20
+    rotate.y = (e.clientX - rect.left - centerX) / 15
+    rotate.x = -(e.clientY - rect.top - centerY) / 15
   }
 
   const handleCardMouseLeave = () => {
@@ -148,8 +145,10 @@ export const useHero = (): HeroReturn => {
     rotate.y = 0
   }
 
+  // ✅ ИСПРАВЛЕНО: Добавлена перспектива и scale
   const cardStyle = computed(() => ({
-    transform: `rotateY(${rotate.y}deg) rotateX(${rotate.x}deg)`,
+    transform: `perspective(1000px) rotateY(${rotate.y}deg) rotateX(${rotate.x}deg) scale3d(1.02, 1.02, 1.02)`,
+    transformStyle: 'preserve-3d',
   }))
 
   const openAnimalModal = (id: string) => {
@@ -181,7 +180,6 @@ export const useHero = (): HeroReturn => {
   }
 
   return {
-    // ✅ Обязательно: всё, что используется в шаблоне
     isEditModalOpen,
     isModalOpen,
     selectedAnimalId,
@@ -205,8 +203,7 @@ export const useHero = (): HeroReturn => {
     animalInfo,
     statsAnimals,
     statsContinents,
-    editFields, // ✅ Добавлено
-
+    editFields,
     handleEditSave,
     handleGlobalMouseMove,
     handleCardMouseMove,
