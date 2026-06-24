@@ -213,9 +213,18 @@
 
     <!-- Overlay Component -->
     <EventsOverlay
-      :visible="!!selectedEvent"
+      :visible="!!selectedEvent && !showPurchaseModal"
       :event-data="selectedEvent"
       @close="selectedEvent = null"
+      @buy="openPurchaseModal"
+    />
+
+    <!-- Purchase Confirm Modal -->
+    <PurchaseConfirmModal
+      :visible="showPurchaseModal"
+      :event-data="selectedEvent"
+      @close="showPurchaseModal = false"
+      @purchased="handleEventPurchased"
     />
 
     <!-- Edit Modal для секции -->
@@ -242,6 +251,7 @@
 
 <script setup lang="ts">
 import EventsOverlay from '@/components/overlay/EventsOverlay.vue'
+import PurchaseConfirmModal from '@/components/overlay/PurchaseConfirmModal.vue'
 import EditModal from '@/components/overlay/EditModal.vue'
 import AppIcon from '@/components/ui/BaseIcon.vue'
 import { ref, computed, onMounted } from 'vue'
@@ -261,6 +271,7 @@ const isDeleteMode = ref(false)
 const selectedEvents = ref<number[]>([])
 const selectedEvent = ref<EventItem | null>(null)
 const isSaving = ref(false)
+const showPurchaseModal = ref(false)
 
 // Редактируемые тексты секции (локально)
 const sectionBadge = ref('Что происходит')
@@ -299,6 +310,18 @@ const loadEvents = async () => {
   } finally {
     isLoading.value = false
   }
+}
+
+// ==================== ПОКУПКА ====================
+
+function openPurchaseModal() {
+  showPurchaseModal.value = true
+}
+
+function handleEventPurchased() {
+  console.log('✅ Событие успешно куплено')
+  // Можно добавить перезагрузку событий или другую логику
+  // loadEvents()
 }
 
 // ==================== ПОЛЯ ДЛЯ РЕДАКТИРОВАНИЯ ====================

@@ -60,8 +60,8 @@
               <div class="text-xs text-cream-100/40 uppercase mt-1">Диета</div>
             </div>
           </div>
-
-          <button class="w-full py-4 rounded-xl bg-lime text-forest-900 font-bold hover:bg-lime/90 transition-colors shadow-lg shadow-lime/20">
+          
+          <button @click="goToPage" class="w-full py-4 rounded-xl bg-lime text-forest-900 font-bold hover:bg-lime/90 transition-colors shadow-lg shadow-lime/20">
             Узнать больше о виде
           </button>
         </div>
@@ -74,6 +74,9 @@
 import AppIcon from '@/components/ui/BaseIcon.vue'
 import { computed } from 'vue'
 
+import { useRouter } from 'vue-router';
+
+const router = useRouter();
 const props = defineProps<{
   visible: boolean
   animalId: string | null
@@ -111,7 +114,15 @@ const animalData = computed(() => {
   if (!props.animalId) return null
   return animalsDB[props.animalId] || animalsDB['lion']
 })
+
+const goToPage = () => {
+
+  router.push('/animals'); 
+  
+
+};
 </script>
+
 
 <style scoped>
 .fade-enter-active, .fade-leave-active { transition: opacity 0.3s ease; }

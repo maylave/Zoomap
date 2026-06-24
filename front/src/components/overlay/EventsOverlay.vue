@@ -58,7 +58,11 @@
               <div class="text-cream-100/40 text-xs">{{ eventData.priceLabel }}</div>
             </div>
 
-            <button class="btn btn-accent rounded-full px-8 py-3 font-semibold">
+            <!-- ✅ ИСПРАВЛЕНИЕ: добавлен @click -->
+            <button 
+              class="btn btn-accent rounded-full px-8 py-3 font-semibold"
+              @click="$emit('buy')"
+            >
               {{ eventData.button }}
             </button>
           </div>
@@ -90,8 +94,10 @@ defineProps<{
   eventData: EventItem | null
 }>()
 
+// ✅ ИСПРАВЛЕНИЕ: добавлено событие buy
 defineEmits<{
   close: []
+  buy: []
 }>()
 </script>
 
@@ -106,7 +112,6 @@ defineEmits<{
   opacity: 0;
 }
 
-/* Анимация появления самого контента модалки */
 .fade-enter-active .relative,
 .fade-leave-active .relative {
   transition:

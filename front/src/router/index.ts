@@ -19,11 +19,6 @@ const router = createRouter({
       name: 'form',
       component: form,
     },
-    {
-      path: '/doc',
-      name: 'doc',
-      component: ApiDocs,
-    },
 
     {
       path: '/zones',
